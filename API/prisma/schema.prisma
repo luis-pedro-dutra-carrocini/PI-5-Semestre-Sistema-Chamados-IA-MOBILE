@@ -1,0 +1,237 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Administrador {
+  AdministradorId       Int    @id @default(autoincrement())
+  AdministradorUsuario  String @db.VarChar(20)   @unique
+  AdministradorSenha    String
+}
+
+model Unidade {
+  UnidadeId             Int      @id @default(autoincrement())
+  UnidadeNome           String   @db.VarChar(200)
+  UnidadeStatus         UnidadeStatus
+  UnidadeDtCadastro     DateTime @default(now())
+
+  Gestor                Gestor[]
+  Departamento          Departamento[]
+  Pessoa                Pessoa[]
+  TipoSuporte           TipoSuporte[]
+  Chamado               Chamado[]
+  Equipe                Equipe[]
+  Tecnico               Tecnico[]
+}
+
+model Gestor {
+  GestorId              Int      @id @default(autoincrement())
+  UnidadeId             Int
+  GestorNome            String   @db.VarChar(100)
+  GestorEmail           String?  @db.VarChar(256)
+  GestorTelefone        String?  @db.VarChar(15)
+  GestorCPF             String   @db.VarChar(15) @unique
+  GestorUsuario         String   @db.VarChar(20) @unique
+  GestorSenha           String
+  GestorNivel           GestorNivel
+  GestorStatus          GestorStatus
+  GestorDtCadastro      DateTime @default(now())
+
+  Unidade               Unidade  @relation(fields: [UnidadeId], references: [UnidadeId])
+}
+
+model Departamento {
+  DepartamentoId         Int      @id @default(autoincrement())
+  UnidadeId              Int
+  DepartamentoNome       String   @db.VarChar(100)
+  DepartamentoDtCadastro DateTime @default(now())
+  DepartamentoStatus     DepartamentoStatus
+
+  Unidade               Unidade   @relation(fields: [UnidadeId], references: [UnidadeId])
+  Tecnico               Tecnico[]
+}
+
+model Pessoa {
+  PessoaId              Int      @id @default(autoincrement())
+  UnidadeId             Int
+  PessoaNome            String   @db.VarChar(100)
+  PessoaEmail           String?  @db.VarChar(256)
+  PessoaTelefone        String?  @db.VarChar(15)
+  PessoaCPF             String   @db.VarChar(15) @unique
+  PessoaSenha           String
+  PessoaStatus          PessoaStatus
+  PessoadtCadastro      DateTime @default(now())
+
+  Unidade               Unidade  @relation(fields: [UnidadeId], references: [UnidadeId])
+  Chamado               Chamado[]
+}
+
+model Tecnico {
+  TecnicoId             Int      @id @default(autoincrement())
+  DepartamentoId        Int
+  UnidadeId             Int
+  TecnicoNome           String   @db.VarChar(100)
+  TecnicoEmail          String?  @db.VarChar(256)
+  TecnicoTelefone       String?  @db.VarChar(15)
+  TecnicoCPF            String   @db.VarChar(15) @unique
+  TecnicoUsuario        String   @db.VarChar(20) @unique
+  TecnicoSenha          String
+  TecnicoStatus         TecnicoStatus
+  TecnicoDtCadastro     DateTime @default(now())
+
+  Departamento          Departamento        @relation(fields: [DepartamentoId], references: [DepartamentoId])
+  Unidade               Unidade             @relation(fields: [UnidadeId], references: [UnidadeId])
+  TecnicoEquipe         TecnicoEquipe[]
+  AtividadeChamado      AtividadeChamado[]
+}
+
+model Equipe {
+  EquipeId              Int      @id @default(autoincrement())
+  UnidadeId             Int
+  EquipeNome            String   @db.VarChar(100)
+  EquipeDescricao       String
+  EquipeDtCadastro      DateTime @default(now())
+  EquipeStatus          EquipeStatus
+
+  Unidade               Unidade  @relation(fields: [UnidadeId], references: [UnidadeId])
+  TecnicoEquipe         TecnicoEquipe[]
+  Chamado               Chamado[]
+}
+
+model TecnicoEquipe {
+  TecEquId              Int      @id @default(autoincrement())
+  EquipeId              Int
+  TecnicoId             Int
+  TecEquStatus          TecEquStatus
+
+  Equipe                Equipe   @relation(fields: [EquipeId], references: [EquipeId])
+  Tecnico               Tecnico  @relation(fields: [TecnicoId], references: [TecnicoId])
+}
+
+model TipoSuporte {
+  TipSupId              Int      @id @default(autoincrement())
+  UnidadeId             Int
+  TipSupNom             String   @db.VarChar(100)
+  TipSupDtCadastro      DateTime @default(now())
+  TipSupStatus          TipSupStatus @default(BLOQUEADOIA)
+
+  Unidade               Unidade  @relation(fields: [UnidadeId], references: [UnidadeId])
+  Chamado               Chamado[]
+}
+
+model Chamado {
+  ChamadoId                 Int             @id @default(autoincrement())
+  TipSupId                  Int?
+  PessoaId                  Int
+  EquipeId                  Int?
+  UnidadeId                 Int
+  ChamadoTitulo             String?         @db.VarChar(100)
+  ChamadoDescricaoInicial   String
+  ChamadoDescricaoFormatada String?
+  ChamadoDtAbertura         DateTime        @default(now())
+  ChamadoDtPlanejada        DateTime?
+  ChamadoDtEncerramento     DateTime?
+  ChamadoPrioridade         Int?            // De 1 a 10
+  ChamadoUrgencia           ChamadoUrgencia?
+  ChamadoStatus             ChamadoStatus?
+
+  TipoSuporte               TipoSuporte?        @relation(fields: [TipSupId], references: [TipSupId])
+  Pessoa                    Pessoa              @relation(fields: [PessoaId], references: [PessoaId])
+  Equipe                    Equipe?             @relation(fields: [EquipeId], references: [EquipeId])
+  Unidade                   Unidade             @relation(fields: [UnidadeId], references: [UnidadeId])
+  AtividadeChamado          AtividadeChamado[]
+  HistoricoChamado          HistoricoChamado[]
+}
+
+model HistoricoChamado {
+  HistChamadoId         Int      @id @default(autoincrement())
+  ChamadoId             Int
+  HistChamadoDescricao  String
+  HistChamadoDt         DateTime @default(now())
+
+  Chamado Chamado  @relation(fields: [ChamadoId], references: [ChamadoId])
+}
+
+model AtividadeChamado {
+  AtividadeId           Int      @id @default(autoincrement())
+  ChamadoId             Int
+  TecnicoId             Int
+  AtividadeDescricao    String
+  AtividadeDtRealizacao DateTime @default(now())
+
+  Chamado               Chamado  @relation(fields: [ChamadoId], references: [ChamadoId])
+  Tecnico               Tecnico  @relation(fields: [TecnicoId], references: [TecnicoId])
+}
+
+enum UnidadeStatus {
+  ATIVA
+  INATIVA
+  BLOQUEADA
+}
+
+enum DepartamentoStatus {
+  ATIVO
+  INATIVO
+  BLOQUEADO
+}
+
+enum PessoaStatus {
+  ATIVA
+  INATIVA
+  BLOQUEADA
+}
+
+enum GestorNivel {
+  COMUM
+  ADMINUNIDADE
+}
+
+enum GestorStatus {
+  ATIVO
+  INATIVO
+  BLOQUEADO
+}
+
+enum TecnicoStatus {
+  ATIVO
+  INATIVO
+  BLOQUEADO
+}
+
+enum EquipeStatus {
+  ATIVA
+  INATIVA
+}
+
+enum TecEquStatus {
+  ATIVO
+  INATIVO
+}
+
+enum TipSupStatus {
+  ATIVO
+  INATIVO
+  BLOQUEADOIA
+}
+
+enum ChamadoStatus {
+  PENDENTE
+  ANALISADO
+  ATRIBUIDO
+  EMATENDIMENTO
+  CONCLUIDO
+  CANDELADO
+  RECUSADO
+  FALTAINFORMACAO
+}
+
+enum ChamadoUrgencia {
+  BAIXA
+  MEDIA
+  ALTA
+  URGENTE
+}

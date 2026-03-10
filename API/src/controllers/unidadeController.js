@@ -175,10 +175,18 @@ class UnidadeController {
         }
     }
 
-    // Listar todas as unidades (acesso público ou restrito?)
+    // Listar todas as unidades (apenas ADMINISTRADOR)
     async listarUnidades(req, res) {
         try {
             const { status, pagina = 1, limite = 10 } = req.query;
+
+            // Verificar se o usuário é ADMINISTRADOR
+            if (req.usuario.usuarioTipo !== 'ADMINISTRADOR') {
+                return res.status(403).json({
+                    error: 'Apenas administradores acessar essa rota'
+                });
+            }
+            
 
             // Construir filtro
             const filtro = {};
@@ -213,7 +221,10 @@ class UnidadeController {
                             select: {
                                 Departamento: true,
                                 Pessoa: true,
-                                TipoSuporte: true
+                                TipoSuporte: true,
+                                Gestor: true,
+                                Tecnico: true,
+                                Chamado: true
                             }
                         }
                     }

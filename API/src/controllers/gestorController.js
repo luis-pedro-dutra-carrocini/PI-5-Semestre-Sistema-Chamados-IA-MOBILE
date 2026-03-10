@@ -1,8 +1,108 @@
 // src/controllers/gestorController.js
 const prisma = require('../prisma.js');
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 
 class GestorController {
+
+    // Login do gestor
+    async loginGestor(req, res) {
+        try {
+            console.log('Body recebido:', req.body);
+            const { GestorUsuario, GestorSenha } = req.body;
+
+            // Validações básicas
+            if (!GestorUsuario || !GestorUsuario.trim()) {
+                return res.status(400).json({
+                    error: 'Usuário é obrigatório'
+                });
+            }
+
+            if (!GestorSenha || !GestorSenha.trim()) {
+                return res.status(400).json({
+                    error: 'Senha é obrigatória'
+                });
+            }
+
+            // Buscar gestor pelo usuário
+            const gestor = await prisma.gestor.findUnique({
+                where: {
+                    GestorUsuario: GestorUsuario.trim()
+                },
+                include: {
+                    Unidade: {
+                        select: {
+                            UnidadeId: true,
+                            UnidadeNome: true,
+                            UnidadeStatus: true
+                        }
+                    }
+                }
+            });
+
+            // Verificar se gestor existe
+            if (!gestor) {
+                return res.status(400).json({
+                    error: 'Usuário ou senha inválidos'
+                });
+            }
+
+            // Verificar se gestor está ativo
+            if (gestor.GestorStatus !== 'ATIVO') {
+                return res.status(403).json({
+                    error: 'Usuário inativo ou bloqueado. Entre em contato com o administrador.'
+                });
+            }
+
+            // Verificar se a unidade está ativa
+            if (gestor.Unidade.UnidadeStatus !== 'ATIVA') {
+                return res.status(403).json({
+                    error: 'Sua unidade está inativa ou bloqueada. Entre em contato com o administrador.'
+                });
+            }
+
+            // Verificar senha com pepper
+            const senhaComPepper = process.env.PEPPER_SENHA_GESTOR + GestorSenha.trim();
+            const senhaValida = await bcrypt.compare(senhaComPepper, gestor.GestorSenha);
+
+            if (!senhaValida) {
+                return res.status(400).json({
+                    error: 'Usuário ou senha inválidos'
+                });
+            }
+
+            // Gerar token JWT
+            const token = jwt.sign(
+                {
+                    usuarioId: gestor.GestorId,
+                    usuarioTipo: 'GESTOR',
+                    usuarioEmail: gestor.GestorEmail,
+                    unidadeId: gestor.UnidadeId,
+                    gestorNivel: gestor.GestorNivel
+                },
+                process.env.JWT_SECRET,
+                { expiresIn: '8h' }
+            );
+
+            // Retornar dados do gestor (sem a senha)
+            const { GestorSenha: _, ...gestorSemSenha } = gestor;
+
+            res.status(200).json({
+                message: 'Login realizado com sucesso',
+                data: {
+                    usuario: gestorSemSenha,
+                    token,
+                    tipo: 'GESTOR'
+                }
+            });
+
+        } catch (error) {
+            console.error('Erro no login do gestor:', error);
+            res.status(500).json({
+                error: error.message
+            });
+        }
+    }
 
     // Cadastrar novo gestor
     async cadastrarGestor(req, res) {
@@ -52,8 +152,8 @@ class GestorController {
 
             const niveisValidos = ['COMUM', 'ADMINUNIDADE'];
             if (!niveisValidos.includes(GestorNivel)) {
-                return res.status(400).json({ 
-                    error: 'Nível inválido. Use: COMUM ou ADMINUNIDADE' 
+                return res.status(400).json({
+                    error: 'Nível inválido. Use: COMUM ou ADMINUNIDADE'
                 });
             }
 
@@ -61,8 +161,8 @@ class GestorController {
             if (GestorStatus) {
                 const statusValidos = ['ATIVO', 'INATIVO', 'BLOQUEADO'];
                 if (!statusValidos.includes(GestorStatus)) {
-                    return res.status(400).json({ 
-                        error: 'Status inválido. Use: ATIVO, INATIVO ou BLOQUEADO' 
+                    return res.status(400).json({
+                        error: 'Status inválido. Use: ATIVO, INATIVO ou BLOQUEADO'
                     });
                 }
             }
@@ -71,43 +171,43 @@ class GestorController {
             if (usuarioLogado.usuarioTipo === 'ADMINISTRADOR') {
                 // ADMINISTRADOR pode cadastrar qualquer nível
                 // Não precisa de validação adicional
-            } 
+            }
             else if (usuarioLogado.usuarioTipo === 'GESTOR') {
                 // Buscar gestor logado para verificar nível e unidade
                 const gestorLogado = await prisma.gestor.findUnique({
-                    where: { GestorId: usuarioLogado.usuarioId }
+                    where: { GestorId: usuarioLogado.usuarioId, GestorStatus: 'ATIVO' }
                 });
 
                 if (!gestorLogado) {
-                    return res.status(403).json({ 
-                        error: 'Gestor não encontrado' 
+                    return res.status(403).json({
+                        error: 'Gestor não encontrado'
                     });
                 }
 
                 // Verificar se é ADMINUNIDADE
                 if (gestorLogado.GestorNivel !== 'ADMINUNIDADE') {
-                    return res.status(403).json({ 
-                        error: 'Apenas gestores ADMINUNIDADE podem cadastrar novos gestores' 
+                    return res.status(403).json({
+                        error: 'Apenas gestores ADMINUNIDADE podem cadastrar novos gestores'
                     });
                 }
 
                 // ADMINUNIDADE não pode cadastrar outro ADMINUNIDADE
                 if (GestorNivel === 'ADMINUNIDADE') {
-                    return res.status(403).json({ 
-                        error: 'Gestores ADMINUNIDADE não podem cadastrar outros administradores de unidade' 
+                    return res.status(403).json({
+                        error: 'Gestores ADMINUNIDADE não podem cadastrar outros administradores de unidade'
                     });
                 }
 
                 // ADMINUNIDADE só pode cadastrar gestores da sua própria unidade
                 if (gestorLogado.UnidadeId !== parseInt(UnidadeId)) {
-                    return res.status(403).json({ 
-                        error: 'Você só pode cadastrar gestores na sua própria unidade' 
+                    return res.status(403).json({
+                        error: 'Você só pode cadastrar gestores na sua própria unidade'
                     });
                 }
-            } 
+            }
             else {
-                return res.status(403).json({ 
-                    error: 'Apenas administradores e gestores ADMINUNIDADE podem cadastrar gestores' 
+                return res.status(403).json({
+                    error: 'Apenas administradores e gestores ADMINUNIDADE podem cadastrar gestores'
                 });
             }
 
@@ -122,8 +222,8 @@ class GestorController {
 
             // Verificar se a unidade está ativa
             if (unidade.UnidadeStatus !== 'ATIVA') {
-                return res.status(400).json({ 
-                    error: 'Não é possível cadastrar gestores em uma unidade inativa ou bloqueada' 
+                return res.status(400).json({
+                    error: 'Não é possível cadastrar gestores em uma unidade inativa ou bloqueada'
                 });
             }
 
@@ -147,7 +247,8 @@ class GestorController {
 
             // Criptografar senha
             const salt = await bcrypt.genSalt(10);
-            const senhaHash = await bcrypt.hash(GestorSenha.trim(), salt);
+            const senhaComPepper = process.env.PEPPER_SENHA_GESTOR + GestorSenha.trim();
+            const senhaHash = await bcrypt.hash(senhaComPepper, salt);
 
             // Criar gestor
             const gestor = await prisma.gestor.create({
@@ -199,12 +300,14 @@ class GestorController {
                 GestorCPF,
                 GestorUsuario,
                 GestorSenha,
+                GestorSenhaAtual,
                 GestorNivel,
                 GestorStatus
             } = req.body;
 
             const usuarioLogado = req.usuario;
             const gestorId = parseInt(id);
+            const isProprioGestor = usuarioLogado.usuarioTipo === 'GESTOR' && usuarioLogado.usuarioId === gestorId;
 
             if (isNaN(gestorId)) {
                 return res.status(400).json({ error: 'ID do gestor inválido' });
@@ -222,68 +325,134 @@ class GestorController {
                 return res.status(404).json({ error: 'Gestor não encontrado' });
             }
 
-            // Verificar permissões baseado no tipo de usuário logado
+            // =============================================
+            // VERIFICAÇÕES DE PERMISSÃO
+            // =============================================
             let podeAlterar = false;
             let gestorLogado = null;
 
+            // CASO 1: ADMINISTRADOR - pode alterar qualquer gestor
             if (usuarioLogado.usuarioTipo === 'ADMINISTRADOR') {
-                // ADMINISTRADOR pode alterar qualquer gestor
                 podeAlterar = true;
-            } 
+            }
+            // CASO 2: GESTOR tentando alterar
             else if (usuarioLogado.usuarioTipo === 'GESTOR') {
-                // Buscar gestor logado
+                // Buscar gestor logado (apenas se estiver ativo)
                 gestorLogado = await prisma.gestor.findUnique({
-                    where: { GestorId: usuarioLogado.usuarioId }
+                    where: {
+                        GestorId: usuarioLogado.usuarioId,
+                        GestorStatus: 'ATIVO'
+                    }
                 });
 
                 if (!gestorLogado) {
-                    return res.status(403).json({ error: 'Gestor não encontrado' });
-                }
-
-                // Gestor COMUM não pode alterar ninguém
-                if (gestorLogado.GestorNivel === 'COMUM') {
-                    return res.status(403).json({ 
-                        error: 'Gestores comuns não podem alterar dados de outros gestores' 
+                    return res.status(403).json({
+                        error: 'Seu usuário não está ativo. Entre em contato com o administrador.'
                     });
                 }
 
-                // ADMINUNIDADE pode alterar desde que:
-                if (gestorLogado.GestorNivel === 'ADMINUNIDADE') {
-                    // 1. Seja da mesma unidade
-                    if (gestorLogado.UnidadeId !== gestorAlterar.UnidadeId) {
-                        return res.status(403).json({ 
-                            error: 'Você só pode alterar gestores da sua própria unidade' 
-                        });
-                    }
-
-                    // 2. Não pode alterar outro ADMINUNIDADE
-                    if (gestorAlterar.GestorNivel === 'ADMINUNIDADE') {
-                        return res.status(403).json({ 
-                            error: 'Gestores ADMINUNIDADE não podem alterar outros administradores de unidade' 
-                        });
-                    }
-
-                    podeAlterar = true;
+                // CASO 2.1: Gestor alterando a si mesmo
+                if (isProprioGestor) {
+                    podeAlterar = true; // Pode alterar, mas com restrições
                 }
-            } 
+                // CASO 2.2: Gestor alterando outro gestor
+                else {
+                    // Gestor COMUM não pode alterar ninguém
+                    if (gestorLogado.GestorNivel === 'COMUM') {
+                        return res.status(403).json({
+                            error: 'Gestores comuns não podem alterar dados de outros gestores'
+                        });
+                    }
+
+                    // ADMINUNIDADE pode alterar desde que:
+                    if (gestorLogado.GestorNivel === 'ADMINUNIDADE') {
+                        // 1. Seja da mesma unidade
+                        if (gestorLogado.UnidadeId !== gestorAlterar.UnidadeId) {
+                            return res.status(403).json({
+                                error: 'Você só pode alterar gestores da sua própria unidade'
+                            });
+                        }
+
+                        // 2. Não pode alterar outro ADMINUNIDADE
+                        if (gestorAlterar.GestorNivel === 'ADMINUNIDADE') {
+                            return res.status(403).json({
+                                error: 'Gestores ADMINUNIDADE não podem alterar outros administradores de unidade'
+                            });
+                        }
+
+                        podeAlterar = true;
+                    }
+                }
+            }
             else {
-                return res.status(403).json({ 
-                    error: 'Apenas administradores e gestores ADMINUNIDADE podem alterar gestores' 
+                return res.status(403).json({
+                    error: 'Acesso negado'
                 });
             }
 
             if (!podeAlterar) {
-                return res.status(403).json({ 
-                    error: 'Você não tem permissão para alterar este gestor' 
+                return res.status(403).json({
+                    error: 'Você não tem permissão para alterar este gestor'
                 });
             }
 
-            // Preparar dados para atualização
+            // =============================================
+            // VALIDAÇÕES ESPECÍFICAS PARA AUTO-ALTERAÇÃO
+            // =============================================
+            if (isProprioGestor) {
+                // Gestor alterando a si mesmo precisa confirmar senha atual
+                if (!GestorSenhaAtual || !GestorSenhaAtual.trim()) {
+                    return res.status(400).json({
+                        error: 'Senha atual é obrigatória para alterar seus dados'
+                    });
+                }
+
+                // Verificar senha atual com pepper
+                const senhaAtualComPepper = process.env.PEPPER_SENHA_GESTOR + GestorSenhaAtual.trim();
+                const senhaAtualValida = await bcrypt.compare(senhaAtualComPepper, gestorAlterar.GestorSenha);
+
+                if (!senhaAtualValida) {
+                    return res.status(400).json({
+                        error: 'Senha atual incorreta'
+                    });
+                }
+
+                // Gestor NÃO pode alterar próprio nível
+                if (GestorNivel !== undefined && GestorNivel !== gestorAlterar.GestorNivel) {
+                    return res.status(403).json({
+                        error: 'Você não pode alterar seu próprio nível de acesso'
+                    });
+                }
+
+                // Gestor NÃO pode alterar próprio status (ativar/inativar-se)
+                if (GestorStatus !== undefined && GestorStatus !== gestorAlterar.GestorStatus) {
+                    return res.status(403).json({
+                        error: 'Você não pode alterar seu próprio status'
+                    });
+                }
+
+                // Gestor NÃO pode alterar própria unidade
+                if (UnidadeId !== undefined && UnidadeId !== gestorAlterar.UnidadeId) {
+                    return res.status(403).json({
+                        error: 'Você não pode alterar sua própria unidade'
+                    });
+                }
+            }
+
+            // =============================================
+            // PREPARAR DADOS PARA ATUALIZAÇÃO
+            // =============================================
             const dadosAtualizacao = {};
 
-            // Validar e adicionar campos
-            if (UnidadeId !== undefined) {
-                // Verificar se a unidade existe
+            // Unidade (apenas ADMIN alterando outros)
+            if (UnidadeId !== undefined && UnidadeId !== gestorAlterar.UnidadeId) {
+                // Se não for admin, não pode
+                if (usuarioLogado.usuarioTipo !== 'ADMINISTRADOR') {
+                    return res.status(403).json({
+                        error: 'Você não tem permissão para alterar a unidade'
+                    });
+                }
+
                 const unidade = await prisma.unidade.findUnique({
                     where: { UnidadeId: parseInt(UnidadeId) }
                 });
@@ -293,14 +462,15 @@ class GestorController {
                 }
 
                 if (unidade.UnidadeStatus !== 'ATIVA') {
-                    return res.status(400).json({ 
-                        error: 'Não é possível transferir gestor para uma unidade inativa ou bloqueada' 
+                    return res.status(400).json({
+                        error: 'Não é possível transferir gestor para uma unidade inativa ou bloqueada'
                     });
                 }
 
                 dadosAtualizacao.UnidadeId = parseInt(UnidadeId);
             }
 
+            // Nome
             if (GestorNome !== undefined) {
                 if (!GestorNome.trim()) {
                     return res.status(400).json({ error: 'Nome do gestor não pode ser vazio' });
@@ -308,90 +478,163 @@ class GestorController {
                 dadosAtualizacao.GestorNome = GestorNome.trim();
             }
 
+            // Email
             if (GestorEmail !== undefined) {
                 dadosAtualizacao.GestorEmail = GestorEmail?.trim() || null;
             }
 
+            // Telefone
             if (GestorTelefone !== undefined) {
                 dadosAtualizacao.GestorTelefone = GestorTelefone?.trim() || null;
             }
 
-            if (GestorCPF !== undefined) {
-                if (!GestorCPF.trim()) {
-                    return res.status(400).json({ error: 'CPF não pode ser vazio' });
-                }
-
-                // Verificar se CPF já existe para outro gestor
-                const cpfExistente = await prisma.gestor.findFirst({
-                    where: {
-                        GestorCPF: GestorCPF.trim(),
-                        GestorId: { not: gestorId }
+            if (usuarioLogado.usuarioTipo === 'ADMINISTRADOR') {
+                // CPF
+                if (GestorCPF !== undefined && gestorAlterar.GestorCPF !== GestorCPF.trim()) {
+                    if (!GestorCPF.trim()) {
+                        return res.status(400).json({ error: 'CPF não pode ser vazio' });
                     }
-                });
 
-                if (cpfExistente) {
-                    return res.status(409).json({ error: 'CPF já cadastrado para outro gestor' });
+                    const cpfExistente = await prisma.gestor.findFirst({
+                        where: {
+                            GestorCPF: GestorCPF.trim(),
+                            GestorId: { not: gestorId }
+                        }
+                    });
+
+                    if (cpfExistente) {
+                        return res.status(409).json({ error: 'CPF já cadastrado para outro gestor' });
+                    }
+
+                    dadosAtualizacao.GestorCPF = GestorCPF.trim();
                 }
 
-                dadosAtualizacao.GestorCPF = GestorCPF.trim();
+                // Usuário
+                if (GestorUsuario !== undefined && gestorAlterar.GestorUsuario !== GestorUsuario.trim()) {
+                    if (!GestorUsuario.trim()) {
+                        return res.status(400).json({ error: 'Usuário não pode ser vazio' });
+                    }
+
+                    const usuarioExistente = await prisma.gestor.findFirst({
+                        where: {
+                            GestorUsuario: GestorUsuario.trim(),
+                            GestorId: { not: gestorId }
+                        }
+                    });
+
+                    if (usuarioExistente) {
+                        return res.status(409).json({ error: 'Nome de usuário já está em uso' });
+                    }
+
+                    dadosAtualizacao.GestorUsuario = GestorUsuario.trim();
+                }
+            } else if (usuarioLogado.usuarioTipo !== 'GESTOR' && gestorLogado.GestorNivel === 'ADMINUNIDADE' && !isProprioGestor) {
+
+                // CPF
+                if (GestorCPF !== undefined && gestorAlterar.GestorCPF !== GestorCPF.trim()) {
+                    if (!GestorCPF.trim()) {
+                        return res.status(400).json({ error: 'CPF não pode ser vazio' });
+                    }
+
+                    const cpfExistente = await prisma.gestor.findFirst({
+                        where: {
+                            GestorCPF: GestorCPF.trim(),
+                            GestorId: { not: gestorId }
+                        }
+                    });
+
+                    if (cpfExistente) {
+                        return res.status(409).json({ error: 'CPF já cadastrado para outro gestor' });
+                    }
+
+                    dadosAtualizacao.GestorCPF = GestorCPF.trim();
+                }
+
+                // Usuário
+                if (GestorUsuario !== undefined && gestorAlterar.GestorUsuario !== GestorUsuario.trim()) {
+                    if (!GestorUsuario.trim()) {
+                        return res.status(400).json({ error: 'Usuário não pode ser vazio' });
+                    }
+
+                    const usuarioExistente = await prisma.gestor.findFirst({
+                        where: {
+                            GestorUsuario: GestorUsuario.trim(),
+                            GestorId: { not: gestorId }
+                        }
+                    });
+
+                    if (usuarioExistente) {
+                        return res.status(409).json({ error: 'Nome de usuário já está em uso' });
+                    }
+
+                    dadosAtualizacao.GestorUsuario = GestorUsuario.trim();
+                }
+            } else {
+                dadosAtualizacao.GestorCPF = gestorAlterar.GestorCPF;
             }
 
-            if (GestorUsuario !== undefined) {
-                if (!GestorUsuario.trim()) {
-                    return res.status(400).json({ error: 'Usuário não pode ser vazio' });
-                }
-
-                // Verificar se usuário já existe para outro gestor
-                const usuarioExistente = await prisma.gestor.findFirst({
-                    where: {
-                        GestorUsuario: GestorUsuario.trim(),
-                        GestorId: { not: gestorId }
-                    }
-                });
-
-                if (usuarioExistente) {
-                    return res.status(409).json({ error: 'Nome de usuário já está em uso' });
-                }
-
-                dadosAtualizacao.GestorUsuario = GestorUsuario.trim();
-            }
-
-            if (GestorSenha !== undefined) {
-                if (!GestorSenha.trim()) {
-                    return res.status(400).json({ error: 'Senha não pode ser vazia' });
-                }
+            // Senha (com pepper)
+            if (GestorSenha !== undefined && GestorSenha.trim()) {
                 if (GestorSenha.trim().length < 6) {
                     return res.status(400).json({ error: 'A senha deve ter no mínimo 6 caracteres' });
                 }
+
+                // Se for auto-alteração, já validou a senha atual
+                // Se for admin alterando outro, não precisa validar senha atual
+                if (!isProprioGestor && usuarioLogado.usuarioTipo !== 'ADMINISTRADOR') {
+                    // ADMINUNIDADE alterando gestor comum precisa da senha atual?
+                    // Por segurança, vamos exigir confirmação
+                    if (!GestorSenhaAtual || !GestorSenhaAtual.trim()) {
+                        return res.status(400).json({
+                            error: 'Senha atual do gestor é obrigatória para alterar a senha'
+                        });
+                    }
+
+                    const senhaAtualComPepper = process.env.PEPPER_SENHA_GESTOR + GestorSenhaAtual.trim();
+                    const senhaAtualValida = await bcrypt.compare(senhaAtualComPepper, gestorAlterar.GestorSenha);
+
+                    if (!senhaAtualValida) {
+                        return res.status(400).json({
+                            error: 'Senha atual do gestor incorreta'
+                        });
+                    }
+                }
+
                 const salt = await bcrypt.genSalt(10);
-                dadosAtualizacao.GestorSenha = await bcrypt.hash(GestorSenha.trim(), salt);
+                const senhaComPepper = process.env.PEPPER_SENHA_GESTOR + GestorSenha.trim();
+                dadosAtualizacao.GestorSenha = await bcrypt.hash(senhaComPepper, salt);
             }
 
+            // Nível (apenas ADMIN pode alterar)
             if (GestorNivel !== undefined) {
-                const niveisValidos = ['COMUM', 'ADMINUNIDADE'];
-                if (!niveisValidos.includes(GestorNivel)) {
-                    return res.status(400).json({ 
-                        error: 'Nível inválido. Use: COMUM ou ADMINUNIDADE' 
+                if (usuarioLogado.usuarioTipo !== 'ADMINISTRADOR' && gestorAlterar.GestorNivel !== GestorNivel) {
+                    return res.status(403).json({
+                        error: 'Apenas administradores podem alterar o nível do gestor'
                     });
                 }
 
-                // ADMINUNIDADE não pode alterar nível para ADMINUNIDADE
-                if (usuarioLogado.usuarioTipo === 'GESTOR' && 
-                    gestorLogado?.GestorNivel === 'ADMINUNIDADE' && 
-                    GestorNivel === 'ADMINUNIDADE') {
-                    return res.status(403).json({ 
-                        error: 'Gestores ADMINUNIDADE não podem alterar o nível para ADMINUNIDADE' 
+                const niveisValidos = ['COMUM', 'ADMINUNIDADE'];
+                if (!niveisValidos.includes(GestorNivel)) {
+                    return res.status(400).json({
+                        error: 'Nível inválido. Use: COMUM ou ADMINUNIDADE'
                     });
                 }
 
                 dadosAtualizacao.GestorNivel = GestorNivel;
             }
 
+            // Status (apenas ADMIN pode alterar)
             if (GestorStatus !== undefined) {
+                if (usuarioLogado.usuarioTipo !== 'ADMINISTRADOR' && gestorAlterar.GestorNivel !== GestorNivel) {
+                    return res.status(403).json({
+                        error: 'Apenas administradores podem alterar o status do gestor'
+                    });
+                }
+
                 const statusValidos = ['ATIVO', 'INATIVO', 'BLOQUEADO'];
                 if (!statusValidos.includes(GestorStatus)) {
-                    return res.status(400).json({ 
-                        error: 'Status inválido. Use: ATIVO, INATIVO ou BLOQUEADO' 
+                    return res.status(400).json({
+                        error: 'Status inválido. Use: ATIVO, INATIVO ou BLOQUEADO'
                     });
                 }
                 dadosAtualizacao.GestorStatus = GestorStatus;
@@ -434,12 +677,12 @@ class GestorController {
     // Listar gestores com filtros
     async listarGestores(req, res) {
         try {
-            const { 
-                unidadeId, 
-                nivel, 
-                status, 
-                pagina = 1, 
-                limite = 10 
+            const {
+                unidadeId,
+                nivel,
+                status,
+                pagina = 1,
+                limite = 10
             } = req.query;
 
             const usuarioLogado = req.usuario;
@@ -467,8 +710,8 @@ class GestorController {
             if (nivel) {
                 const niveisValidos = ['COMUM', 'ADMINUNIDADE'];
                 if (!niveisValidos.includes(nivel)) {
-                    return res.status(400).json({ 
-                        error: 'Nível inválido. Use: COMUM ou ADMINUNIDADE' 
+                    return res.status(400).json({
+                        error: 'Nível inválido. Use: COMUM ou ADMINUNIDADE'
                     });
                 }
                 filtro.GestorNivel = nivel;
@@ -477,8 +720,8 @@ class GestorController {
             if (status) {
                 const statusValidos = ['ATIVO', 'INATIVO', 'BLOQUEADO'];
                 if (!statusValidos.includes(status)) {
-                    return res.status(400).json({ 
-                        error: 'Status inválido. Use: ATIVO, INATIVO ou BLOQUEADO' 
+                    return res.status(400).json({
+                        error: 'Status inválido. Use: ATIVO, INATIVO ou BLOQUEADO'
                     });
                 }
                 filtro.GestorStatus = status;
@@ -570,10 +813,16 @@ class GestorController {
                 });
 
                 if (gestorLogado && gestorLogado.UnidadeId !== gestor.UnidadeId) {
-                    return res.status(403).json({ 
-                        error: 'Você só pode visualizar gestores da sua própria unidade' 
+                    return res.status(403).json({
+                        error: 'Você só pode visualizar gestores da sua própria unidade'
                     });
                 }
+            } else if (usuarioLogado.usuarioTipo === 'ADMINISTRADOR') {
+                // ADMINISTRADOR pode ver qualquer gestor
+            } else {
+                return res.status(403).json({
+                    error: 'Apenas administradores e gestores podem acessar este recurso'
+                });
             }
 
             // Remover senha do retorno
@@ -608,8 +857,8 @@ class GestorController {
 
             const statusValidos = ['ATIVO', 'INATIVO', 'BLOQUEADO'];
             if (!statusValidos.includes(GestorStatus)) {
-                return res.status(400).json({ 
-                    error: 'Status inválido. Use: ATIVO, INATIVO ou BLOQUEADO' 
+                return res.status(400).json({
+                    error: 'Status inválido. Use: ATIVO, INATIVO ou BLOQUEADO'
                 });
             }
 
@@ -628,7 +877,7 @@ class GestorController {
 
             if (usuarioLogado.usuarioTipo === 'ADMINISTRADOR') {
                 podeAlterar = true;
-            } 
+            }
             else if (usuarioLogado.usuarioTipo === 'GESTOR') {
                 gestorLogado = await prisma.gestor.findUnique({
                     where: { GestorId: usuarioLogado.usuarioId }
@@ -639,21 +888,21 @@ class GestorController {
                 }
 
                 if (gestorLogado.GestorNivel === 'COMUM') {
-                    return res.status(403).json({ 
-                        error: 'Gestores comuns não podem alterar status de outros gestores' 
+                    return res.status(403).json({
+                        error: 'Gestores comuns não podem alterar status de outros gestores'
                     });
                 }
 
                 if (gestorLogado.GestorNivel === 'ADMINUNIDADE') {
                     if (gestorLogado.UnidadeId !== gestorAlterar.UnidadeId) {
-                        return res.status(403).json({ 
-                            error: 'Você só pode alterar status de gestores da sua própria unidade' 
+                        return res.status(403).json({
+                            error: 'Você só pode alterar status de gestores da sua própria unidade'
                         });
                     }
 
                     if (gestorAlterar.GestorNivel === 'ADMINUNIDADE') {
-                        return res.status(403).json({ 
-                            error: 'Gestores ADMINUNIDADE não podem alterar status de outros administradores de unidade' 
+                        return res.status(403).json({
+                            error: 'Gestores ADMINUNIDADE não podem alterar status de outros administradores de unidade'
                         });
                     }
 
@@ -662,8 +911,8 @@ class GestorController {
             }
 
             if (!podeAlterar) {
-                return res.status(403).json({ 
-                    error: 'Você não tem permissão para alterar o status deste gestor' 
+                return res.status(403).json({
+                    error: 'Você não tem permissão para alterar o status deste gestor'
                 });
             }
 
@@ -694,6 +943,168 @@ class GestorController {
             console.error('Erro ao alterar status do gestor:', error);
             res.status(500).json({ error: error.message });
         }
+    }
+
+    // Dashboard Gestor
+    async dashboard(req, res) {
+        try {
+            // Verificar se o usuário é ADMINISTRADOR
+
+            // DEBUG: verificar o conteúdo do req.usuario
+            //console.log('req.usuario:', req.usuario);
+
+            if (req.usuario.usuarioTipo !== 'GESTOR') {
+                return res.status(403).json({
+                    error: 'Apenas gestores podem acessar essa rota'
+                });
+            }
+
+            const gestorLogado = await prisma.gestor.findUnique({
+                where: { GestorId: req.usuario.usuarioId }
+            });
+
+            const totalPessoas = await prisma.pessoa.count({
+                where: {
+                    PessoaStatus: 'ATIVA',
+                    UnidadeId: gestorLogado.UnidadeId
+                }
+            });
+
+            const totalTecnicos = await prisma.tecnico.count({
+                where: {
+                    TecnicoStatus: 'ATIVO',
+                    UnidadeId: gestorLogado.UnidadeId
+                }
+            });
+
+            const totalEquipes = await prisma.equipe.count({
+                where: {
+                    EquipeStatus: 'ATIVA',
+                    UnidadeId: gestorLogado.UnidadeId
+                }
+            });
+
+            let totalGestoresComuns
+            if (gestorLogado.GestorNivel === 'ADMINUNIDADE') {
+                totalGestoresComuns = await prisma.gestor.count({
+                    where: {
+                        GestorStatus: 'ATIVO',
+                        UnidadeId: gestorLogado.UnidadeId,
+                        GestorNivel: 'COMUM'
+                    }
+                });
+            } else {
+                totalGestoresComuns = 0;
+            }
+
+
+            let totalGestoresADM;
+            if (gestorLogado.GestorNivel === 'ADMINUNIDADE') {
+                totalGestoresADM = await prisma.gestor.count({
+                    where: {
+                        GestorStatus: 'ATIVO',
+                        UnidadeId: gestorLogado.UnidadeId,
+                        GestorNivel: 'ADMINUNIDADE'
+                    }
+                });
+            } else {
+                totalGestoresADM = 0;
+            }
+
+            const totalTiposSuporte = await prisma.tipoSuporte.count({
+                where: {
+                    TipSupStatus: 'ATIVO',
+                    UnidadeId: gestorLogado.UnidadeId
+                }
+            });
+
+            const totalDepartamentos = await prisma.departamento.count({
+                where: {
+                    DepartamentoStatus: 'ATIVO',
+                    UnidadeId: gestorLogado.UnidadeId
+                }
+            });
+
+            const totalChamadosPendentes = await prisma.chamado.count({
+                where: {
+                    ChamadoStatus: 'PENDENTE',
+                    UnidadeId: gestorLogado.UnidadeId
+                }
+            });
+
+            const totalChamadosAnalisados = await prisma.chamado.count({
+                where: {
+                    ChamadoStatus: 'ANALISADO',
+                    UnidadeId: gestorLogado.UnidadeId
+                }
+            });
+
+            const totalChamadosAtribuidos = await prisma.chamado.count({
+                where: {
+                    ChamadoStatus: 'ATRIBUIDO',
+                    UnidadeId: gestorLogado.UnidadeId
+                }
+            });
+
+            const totalChamadosAtendimento = await prisma.chamado.count({
+                where: {
+                    ChamadoStatus: 'EMATENDIMENTO',
+                    UnidadeId: gestorLogado.UnidadeId
+                }
+            });
+
+            const totalChamadosFaltandoInformacao = await prisma.chamado.count({
+                where: {
+                    ChamadoStatus: 'FALTAINFORMACAO',
+                    UnidadeId: gestorLogado.UnidadeId
+                }
+            });
+
+            const totalChamadosRecusados = await prisma.chamado.count({
+                where: {
+                    ChamadoStatus: 'RECUSADO',
+                    UnidadeId: gestorLogado.UnidadeId
+                }
+            });
+
+            // Status Chamados
+            /*
+            PENDENTE            // Pessoa acabou de abrir
+            ANALISADO           // IA ou Pessoa analisou
+            ATRIBUIDO           // Pessoa atribuiu a uma equipe
+            EMATENDIMENTO       // Equipe iniciou o atendimento
+            CONCLUIDO
+            CANDELADO           // Pessoa que abriu cancelou
+            RECUSADO            // Gestor Recusou
+            FALTAINFORMACAO     // IA Identifivou que falta informação, gestor precisa analisar e solitar detalhes para pessoa que abriu
+            */
+
+            res.status(200).json({
+                data: {
+                    totalChamadosAnalisados,
+                    totalChamadosAtribuidos,
+                    totalChamadosAtendimento,
+                    totalChamadosFaltandoInformacao,
+                    totalChamadosPendentes,
+                    totalChamadosRecusados,
+                    totalDepartamentos,
+                    totalEquipes,
+                    totalGestoresADM,
+                    totalGestoresComuns,
+                    totalPessoas,
+                    totalTecnicos,
+                    totalTiposSuporte
+                }
+            });
+
+
+        } catch (error) {
+            console.error('Erro ao montar dashboardo gestor:', error);
+            res.status(500).json({
+                error: error.message
+            });
+        }
+
     }
 }
 

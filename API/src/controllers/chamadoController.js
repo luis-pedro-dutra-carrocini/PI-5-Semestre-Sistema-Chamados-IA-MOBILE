@@ -116,7 +116,7 @@ class ChamadoController {
         }
     }
 
-    // Alterar chamado (gestor OU técnico da equipe responsável OU pessoa que abriu - com restrições)
+    // Alterar chamado (gestor OU pessoa que abriu - com restrições)
     async alterarChamado(req, res) {
         try {
             const { id } = req.params;
@@ -178,6 +178,13 @@ class ChamadoController {
                         error: 'Você não pode alterar tipo de suporte, equipe, prioridade, urgência ou status do chamado'
                     });
                 }
+
+                // Caso o status jánão seja mais pendentes, não se pode alterar
+                if (chamadoExistente.ChamadoStatus !== 'PENDENTE') {
+                    return res.status(403).json({
+                        error: 'Chamado jánão estámasi pendente, não permitido alterar.'
+                    })
+                }
             }
 
             // Caso 2: Gestor da unidade
@@ -189,30 +196,6 @@ class ChamadoController {
                 if (gestorLogado && gestorLogado.UnidadeId === chamadoExistente.UnidadeId) {
                     podeAlterar = true;
                     tipoAcesso = 'GESTOR';
-                }
-            }
-
-            // Caso 3: Técnico da equipe responsável
-            else if (usuarioLogado.usuarioTipo === 'TECNICO' && chamadoExistente.EquipeId) {
-                // Verificar se o técnico pertence à equipe responsável
-                const tecnicoEquipe = await prisma.tecnicoEquipe.findFirst({
-                    where: {
-                        TecnicoId: usuarioLogado.usuarioId,
-                        EquipeId: chamadoExistente.EquipeId,
-                        TecEquStatus: 'ATIVO'
-                    }
-                });
-
-                if (tecnicoEquipe) {
-                    podeAlterar = true;
-                    tipoAcesso = 'TECNICO';
-
-                    // Técnico não pode alterar certos campos
-                    if (TipSupId !== undefined || EquipeId !== undefined) {
-                        return res.status(403).json({
-                            error: 'Técnicos não podem alterar tipo de suporte ou equipe do chamado'
-                        });
-                    }
                 }
             }
 

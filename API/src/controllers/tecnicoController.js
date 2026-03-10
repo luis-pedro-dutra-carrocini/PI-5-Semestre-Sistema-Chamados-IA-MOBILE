@@ -23,6 +23,9 @@ class TecnicoController {
                 });
             }
 
+            // Sempre UPPERCASE
+            TecnicoUsuario.trim().toUpperCase();
+
             // Buscar técnico pelo usuário
             const tecnico = await prisma.tecnico.findUnique({
                 where: {
@@ -48,7 +51,7 @@ class TecnicoController {
 
             // Verificar se técnico existe
             if (!tecnico) {
-                return res.status(401).json({
+                return res.status(400).json({
                     error: 'Usuário ou senha inválidos'
                 });
             }
@@ -81,7 +84,7 @@ class TecnicoController {
             );
 
             if (!senhaValida) {
-                return res.status(401).json({
+                return res.status(400).json({
                     error: 'Usuário ou senha inválidos'
                 });
             }

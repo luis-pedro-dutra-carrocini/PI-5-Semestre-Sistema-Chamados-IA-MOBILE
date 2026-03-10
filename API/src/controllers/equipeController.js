@@ -3,8 +3,6 @@ const prisma = require('../prisma.js');
 
 class EquipeController {
 
-    // ========== EQUIPES ==========
-
     // Cadastrar nova equipe (apenas gestores)
     async cadastrarEquipe(req, res) {
         try {
@@ -239,22 +237,6 @@ class EquipeController {
                     });
                 }
 
-                // Se for inativar, verificar se existem técnicos ativos na equipe
-                if (EquipeStatus === 'INATIVA' && equipeExistente.EquipeStatus === 'ATIVA') {
-                    const tecnicosAtivos = await prisma.tecnicoEquipe.count({
-                        where: {
-                            EquipeId: equipeId,
-                            TecEquStatus: 'ATIVO'
-                        }
-                    });
-
-                    if (tecnicosAtivos > 0) {
-                        return res.status(400).json({
-                            error: 'Não é possível inativar uma equipe com técnicos ativos. Remova ou inative os vínculos primeiro.'
-                        });
-                    }
-                }
-
                 dadosAtualizacao.EquipeStatus = EquipeStatus;
             }
 
@@ -408,7 +390,7 @@ class EquipeController {
 
             // Buscar equipe
             const equipe = await prisma.equipe.findUnique({
-                where: { EquipeId: equipeId },
+                where: { EquipeId: equipeId, UnidadeId: Number(usuarioLogado.unidadeId) },
                 include: {
                     Unidade: {
                         select: {
@@ -554,6 +536,7 @@ class EquipeController {
             }
 
             // Se for inativar, verificar se existem técnicos ativos na equipe
+            /*
             if (EquipeStatus === 'INATIVA' && equipeExistente.EquipeStatus === 'ATIVA') {
                 const tecnicosAtivos = await prisma.tecnicoEquipe.count({
                     where: {
@@ -568,6 +551,7 @@ class EquipeController {
                     });
                 }
             }
+            */
 
             // Atualizar status
             const equipeAtualizada = await prisma.equipe.update({
@@ -594,8 +578,6 @@ class EquipeController {
             res.status(500).json({ error: error.message });
         }
     }
-
-    // ========== VÍNCULOS TÉCNICO-EQUIPE ==========
 
     // Adicionar técnico à equipe (apenas gestores)
     async adicionarTecnicoEquipe(req, res) {
@@ -692,13 +674,11 @@ class EquipeController {
             }
 
             // Verificar se o vínculo já existe
-            const vinculoExistente = await prisma.tecnicoEquipe.findUnique({
+            // Verificar se o vínculo já existe
+            const vinculoExistente = await prisma.tecnicoEquipe.findFirst({
                 where: {
-                    // Como não há composite key, buscar por combinação única
-                    EquipeId_TecnicoId: {
-                        EquipeId: equipeIdInt,
-                        TecnicoId: tecnicoIdInt
-                    }
+                    EquipeId: equipeIdInt,
+                    TecnicoId: tecnicoIdInt
                 }
             });
 
@@ -805,7 +785,7 @@ class EquipeController {
             }
 
             // Buscar vínculo
-            const vinculo = await prisma.tecnicoEquipe.findUnique({
+            const vinculo = await prisma.tecnicoEquipe.findFirst({
                 where: { TecEquId: vinculoIdInt },
                 include: {
                     Equipe: {
@@ -896,7 +876,7 @@ class EquipeController {
             }
 
             // Buscar vínculo
-            const vinculo = await prisma.tecnicoEquipe.findUnique({
+            const vinculo = await prisma.tecnicoEquipe.findFirst({
                 where: { TecEquId: vinculoIdInt },
                 include: {
                     Equipe: {
@@ -1130,6 +1110,7 @@ class EquipeController {
             res.status(500).json({ error: error.message });
         }
     }
+
 }
 
 module.exports = new EquipeController();

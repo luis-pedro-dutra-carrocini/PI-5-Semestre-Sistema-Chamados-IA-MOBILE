@@ -167,6 +167,10 @@ model AtividadeChamado {
   Tecnico               Tecnico  @relation(fields: [TecnicoId], references: [TecnicoId])
 }
 
+
+
+
+
 enum UnidadeStatus {
   ATIVA
   INATIVA
@@ -217,6 +221,18 @@ enum TipSupStatus {
   INATIVO
   BLOQUEADOIA
 }
+
+// Status Chamados
+/*
+PENDENTE            // Pessoa acabou de abrir
+ANALISADO           // IA ou Pessoa analisou
+ATRIBUIDO           // Pessoa atribuiu a uma equipe
+EMATENDIMENTO       // Equipe iniciou o atendimento
+CONCLUIDO
+CANDELADO           // Pessoa que abriu cancelou
+RECUSADO            // Gestor Recusou
+FALTAINFORMACAO     // IA Identifivou que falta informação, gestor precisa analisar e solitar detalhes para pessoa que abriu
+*/
 
 enum ChamadoStatus {
   PENDENTE

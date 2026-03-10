@@ -41,7 +41,7 @@ class PessoaController {
 
             // Verificar se pessoa existe
             if (!pessoa) {
-                return res.status(401).json({
+                return res.status(400).json({
                     error: 'Usuário ou senha inválidos'
                 });
             }
@@ -67,7 +67,7 @@ class PessoaController {
             );
 
             if (!senhaValida) {
-                return res.status(401).json({
+                return res.status(400).json({
                     error: 'Usuário ou senha inválidos'
                 });
             }
@@ -182,6 +182,13 @@ class PessoaController {
             if (unidade.UnidadeStatus !== 'ATIVA') {
                 return res.status(400).json({
                     error: 'Não é possível cadastrar pessoas em uma unidade inativa ou bloqueada'
+                });
+            }
+
+            // Verifica se o gestor é da mesma unidade
+            if (gestorLogado.UnidadeId !== parseInt(UnidadeId)) {
+                return res.status(400).json({
+                    error: 'Você só pode cadastrar pessoas na sua própria unidade'
                 });
             }
 

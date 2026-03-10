@@ -6,13 +6,14 @@ const authMiddleware = require('../middlewares/authMiddleware');
 const router = express.Router();
 
 // Rotas públicas (não exigem autenticação para consultas básicas)
-router.get('/', equipeController.listarEquipes);
-router.get('/:id', equipeController.buscarEquipePorId);
-router.get('/:equipeId/tecnicos', equipeController.listarVinculosPorEquipe);
-router.get('/tecnico/:tecnicoId', equipeController.listarVinculosPorTecnico);
+router.get('/:id', equipeController.buscarEquipePorId);;
 
 // Todas as rotas abaixo exigem autenticação
 router.use(authMiddleware);
+
+router.get('/', equipeController.listarEquipes);
+router.get('/:equipeId/tecnicos', equipeController.listarVinculosPorEquipe);
+router.get('/tecnico/:tecnicoId', equipeController.listarVinculosPorTecnico)
 
 // Rotas de equipe (apenas gestores)
 router.post('/', equipeController.cadastrarEquipe);

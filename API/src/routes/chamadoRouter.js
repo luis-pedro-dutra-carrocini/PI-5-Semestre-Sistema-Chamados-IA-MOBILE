@@ -19,6 +19,6 @@ router.put('/:id', chamadoController.alterarChamado); // Pessoa (restrito), gest
 router.patch('/:id/status', chamadoController.alterarStatus); // Gestor ou técnico
 router.patch('/:id/atribuir-equipe', chamadoController.atribuirEquipe); // Apenas gestor
 
-// NOTA: Não há rota de DELETE, conforme solicitado
+// NOTA: Não há rota de DELETE
 
 module.exports = router;

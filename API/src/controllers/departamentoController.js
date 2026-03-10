@@ -3,7 +3,7 @@ const prisma = require('../prisma.js');
 
 class DepartamentoController {
 
-    // Cadastrar novo departamento (apenas ADMINUNIDADE)
+    // Cadastrar novo departamento (apenas gestores)
     async cadastrarDepartamento(req, res) {
         try {
             const { UnidadeId, DepartamentoNome, DepartamentoStatus } = req.body;
@@ -20,8 +20,8 @@ class DepartamentoController {
 
             // Verificar se o usuário é GESTOR
             if (usuarioLogado.usuarioTipo !== 'GESTOR') {
-                return res.status(403).json({ 
-                    error: 'Apenas gestores podem cadastrar departamentos' 
+                return res.status(403).json({
+                    error: 'Apenas gestores podem cadastrar departamentos'
                 });
             }
 
@@ -34,17 +34,10 @@ class DepartamentoController {
                 return res.status(403).json({ error: 'Gestor não encontrado' });
             }
 
-            // Verificar se é ADMINUNIDADE
-            if (gestorLogado.GestorNivel !== 'ADMINUNIDADE') {
-                return res.status(403).json({ 
-                    error: 'Apenas gestores ADMINUNIDADE podem cadastrar departamentos' 
-                });
-            }
-
             // Verificar se o gestor pertence à unidade informada
             if (gestorLogado.UnidadeId !== parseInt(UnidadeId)) {
-                return res.status(403).json({ 
-                    error: 'Você só pode cadastrar departamentos na sua própria unidade' 
+                return res.status(403).json({
+                    error: 'Você só pode cadastrar departamentos na sua própria unidade'
                 });
             }
 
@@ -58,8 +51,8 @@ class DepartamentoController {
             }
 
             if (unidade.UnidadeStatus !== 'ATIVA') {
-                return res.status(400).json({ 
-                    error: 'Não é possível cadastrar departamentos em uma unidade inativa ou bloqueada' 
+                return res.status(400).json({
+                    error: 'Não é possível cadastrar departamentos em uma unidade inativa ou bloqueada'
                 });
             }
 
@@ -67,8 +60,8 @@ class DepartamentoController {
             if (DepartamentoStatus) {
                 const statusValidos = ['ATIVO', 'INATIVO', 'BLOQUEADO'];
                 if (!statusValidos.includes(DepartamentoStatus)) {
-                    return res.status(400).json({ 
-                        error: 'Status inválido. Use: ATIVO, INATIVO ou BLOQUEADO' 
+                    return res.status(400).json({
+                        error: 'Status inválido. Use: ATIVO, INATIVO ou BLOQUEADO'
                     });
                 }
             }
@@ -85,8 +78,8 @@ class DepartamentoController {
             });
 
             if (departamentoExistente) {
-                return res.status(409).json({ 
-                    error: 'Já existe um departamento com este nome nesta unidade' 
+                return res.status(409).json({
+                    error: 'Já existe um departamento com este nome nesta unidade'
                 });
             }
 
@@ -120,7 +113,7 @@ class DepartamentoController {
         }
     }
 
-    // Alterar departamento (apenas ADMINUNIDADE)
+    // Alterar departamento (apenas gestores)
     async alterarDepartamento(req, res) {
         try {
             const { id } = req.params;
@@ -134,8 +127,8 @@ class DepartamentoController {
 
             // Verificar se o usuário é GESTOR
             if (usuarioLogado.usuarioTipo !== 'GESTOR') {
-                return res.status(403).json({ 
-                    error: 'Apenas gestores podem alterar departamentos' 
+                return res.status(403).json({
+                    error: 'Apenas gestores podem alterar departamentos'
                 });
             }
 
@@ -146,13 +139,6 @@ class DepartamentoController {
 
             if (!gestorLogado) {
                 return res.status(403).json({ error: 'Gestor não encontrado' });
-            }
-
-            // Verificar se é ADMINUNIDADE
-            if (gestorLogado.GestorNivel !== 'ADMINUNIDADE') {
-                return res.status(403).json({ 
-                    error: 'Apenas gestores ADMINUNIDADE podem alterar departamentos' 
-                });
             }
 
             // Buscar departamento a ser alterado
@@ -169,15 +155,15 @@ class DepartamentoController {
 
             // Verificar se o gestor pertence à mesma unidade do departamento
             if (gestorLogado.UnidadeId !== departamentoExistente.UnidadeId) {
-                return res.status(403).json({ 
-                    error: 'Você só pode alterar departamentos da sua própria unidade' 
+                return res.status(403).json({
+                    error: 'Você só pode alterar departamentos da sua própria unidade'
                 });
             }
 
             // Verificar se a unidade está ativa
             if (departamentoExistente.Unidade.UnidadeStatus !== 'ATIVA') {
-                return res.status(400).json({ 
-                    error: 'Não é possível alterar departamentos de uma unidade inativa ou bloqueada' 
+                return res.status(400).json({
+                    error: 'Não é possível alterar departamentos de uma unidade inativa ou bloqueada'
                 });
             }
 
@@ -187,8 +173,8 @@ class DepartamentoController {
             // Validar e adicionar nome se fornecido
             if (DepartamentoNome !== undefined) {
                 if (!DepartamentoNome.trim()) {
-                    return res.status(400).json({ 
-                        error: 'Nome do departamento não pode ser vazio' 
+                    return res.status(400).json({
+                        error: 'Nome do departamento não pode ser vazio'
                     });
                 }
 
@@ -208,8 +194,8 @@ class DepartamentoController {
                     });
 
                     if (departamentoMesmoNome) {
-                        return res.status(409).json({ 
-                            error: 'Já existe outro departamento com este nome nesta unidade' 
+                        return res.status(409).json({
+                            error: 'Já existe outro departamento com este nome nesta unidade'
                         });
                     }
                 }
@@ -221,8 +207,8 @@ class DepartamentoController {
             if (DepartamentoStatus !== undefined) {
                 const statusValidos = ['ATIVO', 'INATIVO', 'BLOQUEADO'];
                 if (!statusValidos.includes(DepartamentoStatus)) {
-                    return res.status(400).json({ 
-                        error: 'Status inválido. Use: ATIVO, INATIVO ou BLOQUEADO' 
+                    return res.status(400).json({
+                        error: 'Status inválido. Use: ATIVO, INATIVO ou BLOQUEADO'
                     });
                 }
                 dadosAtualizacao.DepartamentoStatus = DepartamentoStatus;
@@ -230,8 +216,8 @@ class DepartamentoController {
 
             // Verificar se há dados para atualizar
             if (Object.keys(dadosAtualizacao).length === 0) {
-                return res.status(400).json({ 
-                    error: 'Nenhum dado fornecido para atualização' 
+                return res.status(400).json({
+                    error: 'Nenhum dado fornecido para atualização'
                 });
             }
 
@@ -264,11 +250,11 @@ class DepartamentoController {
     // Listar departamentos com filtros
     async listarDepartamentos(req, res) {
         try {
-            const { 
-                unidadeId, 
-                status, 
-                pagina = 1, 
-                limite = 10 
+            const {
+                unidadeId,
+                status,
+                pagina = 1,
+                limite = 10
             } = req.query;
 
             const usuarioLogado = req.usuario;
@@ -299,8 +285,8 @@ class DepartamentoController {
             if (status) {
                 const statusValidos = ['ATIVO', 'INATIVO', 'BLOQUEADO'];
                 if (!statusValidos.includes(status)) {
-                    return res.status(400).json({ 
-                        error: 'Status inválido. Use: ATIVO, INATIVO ou BLOQUEADO' 
+                    return res.status(400).json({
+                        error: 'Status inválido. Use: ATIVO, INATIVO ou BLOQUEADO'
                     });
                 }
                 filtro.DepartamentoStatus = status;
@@ -354,10 +340,11 @@ class DepartamentoController {
         }
     }
 
-    // Buscar departamento por ID
+    // Buscar departamento por ID  (pessoa, admin, gestor e técnico de mesma unidade)
     async buscarDepartamentoPorId(req, res) {
         try {
             const { id } = req.params;
+
             const usuarioLogado = req.usuario;
 
             const departamentoId = parseInt(id);
@@ -365,9 +352,43 @@ class DepartamentoController {
                 return res.status(400).json({ error: 'ID do departamento inválido' });
             }
 
+            if (isNaN(req.usuario.usuarioId)){
+                return res.status(403).json({
+                    error: 'Acesso negado'
+                });
+            }
+
+            // Obtendo o usuário
+            /*
+            let usuarioLogado = await prisma.gestor.findUnique({
+                where: { GestorId: Number(req.usuario.usuarioId) }
+            });
+
+            if (!usuarioLogado) {
+                usuarioLogado = await prisma.administrador.findUnique({
+                    where: { AdministradorId: Number(req.usuario.usuarioId) }
+                });
+                if (!usuarioLogado) {
+                    usuarioLogado = await prisma.pessoa.findUnique({
+                        where: { PessoaId: Number(req.usuario.usuarioId) }
+                    });
+                    if (!usuarioLogado) {
+                        usuarioLogado = await prisma.tecnico.findUnique({
+                            where: { TecnicoId: Number(req.usuario.usuarioId) }
+                        });
+                        if (!usuarioLogado) {
+                            return res.status(403).json({
+                                error: 'Acesso negado'
+                            });
+                        }
+                    }
+                }
+            }
+            */
+
             // Buscar departamento
             const departamento = await prisma.departamento.findUnique({
-                where: { DepartamentoId: departamentoId },
+                where: { DepartamentoId: departamentoId, UnidadeId: Number(usuarioLogado.unidadeId)},
                 include: {
                     Unidade: {
                         select: {
@@ -398,8 +419,8 @@ class DepartamentoController {
                 });
 
                 if (gestorLogado && gestorLogado.UnidadeId !== departamento.UnidadeId) {
-                    return res.status(403).json({ 
-                        error: 'Você só pode visualizar departamentos da sua própria unidade' 
+                    return res.status(403).json({
+                        error: 'Você só pode visualizar departamentos da sua própria unidade'
                     });
                 }
             }
@@ -433,15 +454,15 @@ class DepartamentoController {
 
             const statusValidos = ['ATIVO', 'INATIVO', 'BLOQUEADO'];
             if (!statusValidos.includes(DepartamentoStatus)) {
-                return res.status(400).json({ 
-                    error: 'Status inválido. Use: ATIVO, INATIVO ou BLOQUEADO' 
+                return res.status(400).json({
+                    error: 'Status inválido. Use: ATIVO, INATIVO ou BLOQUEADO'
                 });
             }
 
             // Verificar se o usuário é GESTOR
             if (usuarioLogado.usuarioTipo !== 'GESTOR') {
-                return res.status(403).json({ 
-                    error: 'Apenas gestores podem alterar status de departamentos' 
+                return res.status(403).json({
+                    error: 'Apenas gestores podem alterar status de departamentos'
                 });
             }
 
@@ -452,13 +473,6 @@ class DepartamentoController {
 
             if (!gestorLogado) {
                 return res.status(403).json({ error: 'Gestor não encontrado' });
-            }
-
-            // Verificar se é ADMINUNIDADE
-            if (gestorLogado.GestorNivel !== 'ADMINUNIDADE') {
-                return res.status(403).json({ 
-                    error: 'Apenas gestores ADMINUNIDADE podem alterar status de departamentos' 
-                });
             }
 
             // Buscar departamento a ser alterado
@@ -475,15 +489,15 @@ class DepartamentoController {
 
             // Verificar se o gestor pertence à mesma unidade do departamento
             if (gestorLogado.UnidadeId !== departamentoExistente.UnidadeId) {
-                return res.status(403).json({ 
-                    error: 'Você só pode alterar status de departamentos da sua própria unidade' 
+                return res.status(403).json({
+                    error: 'Você só pode alterar status de departamentos da sua própria unidade'
                 });
             }
 
             // Verificar se a unidade está ativa
             if (departamentoExistente.Unidade.UnidadeStatus !== 'ATIVA') {
-                return res.status(400).json({ 
-                    error: 'Não é possível alterar departamentos de uma unidade inativa ou bloqueada' 
+                return res.status(400).json({
+                    error: 'Não é possível alterar departamentos de uma unidade inativa ou bloqueada'
                 });
             }
 
@@ -497,8 +511,8 @@ class DepartamentoController {
                 });
 
                 if (tecnicosAtivos > 0) {
-                    return res.status(400).json({ 
-                        error: 'Não é possível inativar/bloquear um departamento com técnicos ativos' 
+                    return res.status(400).json({
+                        error: 'Não é possível inativar/bloquear um departamento com técnicos ativos'
                     });
                 }
             }
@@ -529,62 +543,6 @@ class DepartamentoController {
         }
     }
 
-    // Listar departamentos por unidade (para uso em selects)
-    async listarDepartamentosPorUnidade(req, res) {
-        try {
-            const { unidadeId } = req.params;
-            const { apenasAtivos } = req.query;
-
-            const unidadeIdInt = parseInt(unidadeId);
-            if (isNaN(unidadeIdInt)) {
-                return res.status(400).json({ error: 'ID da unidade inválido' });
-            }
-
-            // Verificar se unidade existe
-            const unidade = await prisma.unidade.findUnique({
-                where: { UnidadeId: unidadeIdInt }
-            });
-
-            if (!unidade) {
-                return res.status(404).json({ error: 'Unidade não encontrada' });
-            }
-
-            // Construir filtro
-            const filtro = {
-                UnidadeId: unidadeIdInt
-            };
-
-            if (apenasAtivos === 'true') {
-                filtro.DepartamentoStatus = 'ATIVO';
-            }
-
-            // Buscar departamentos
-            const departamentos = await prisma.departamento.findMany({
-                where: filtro,
-                orderBy: {
-                    DepartamentoNome: 'asc'
-                },
-                select: {
-                    DepartamentoId: true,
-                    DepartamentoNome: true,
-                    DepartamentoStatus: true,
-                    _count: {
-                        select: {
-                            Tecnico: true
-                        }
-                    }
-                }
-            });
-
-            res.status(200).json({
-                data: departamentos
-            });
-
-        } catch (error) {
-            console.error('Erro ao listar departamentos por unidade:', error);
-            res.status(500).json({ error: error.message });
-        }
-    }
 }
 
 module.exports = new DepartamentoController();

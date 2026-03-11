@@ -353,7 +353,13 @@ class EquipeController {
                                         TecEquStatus: 'ATIVO'
                                     }
                                 },
-                                Chamado: true
+                                Chamado: {
+                                    where: {
+                                        ChamadoStatus: {
+                                            in: ['ATRIBUIDO', 'EMATENDIMENTO']
+                                        }
+                                    }
+                                }
                             }
                         }
                     }

@@ -60,11 +60,9 @@ class PessoaController {
                 });
             }
 
-            // Verificar senha
-            const senhaValida = await bcrypt.compare(
-                PessoaSenha.trim(),
-                pessoa.PessoaSenha
-            );
+            // Verificar senha com pepper
+            const senhaComPepper = process.env.PEPPER_SENHA_PESSOA + PessoaSenha.trim();
+            const senhaValida = await bcrypt.compare(senhaComPepper, pessoa.PessoaSenha);
 
             if (!senhaValida) {
                 return res.status(400).json({

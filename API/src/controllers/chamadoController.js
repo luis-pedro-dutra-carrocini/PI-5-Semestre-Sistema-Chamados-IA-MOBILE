@@ -772,7 +772,7 @@ class ChamadoController {
                 return res.status(400).json({ error: 'Status é obrigatório' });
             }
 
-            const statusValidos = ['PENDENTE', 'ANALISADO', 'ATRIBUIDO', 'EMATENDIMENTO', 'CONCLUIDO', 'CANCELADO', 'RECUSADO'];
+            const statusValidos = ['PENDENTE', 'ANALISADO', 'ATRIBUIDO', 'EMATENDIMENTO', 'CONCLUIDO', 'CANCELADO', 'RECUSADO', 'FALTAINFORMACAO'];
             if (!statusValidos.includes(ChamadoStatus)) {
                 return res.status(400).json({ error: 'Status inválido' });
             }
@@ -810,7 +810,7 @@ class ChamadoController {
                     podeAlterarStatus = true;
                 }
             }
-            // Técnico da equipe responsável pode alterar (exceto cancelar/recusar)
+            // Técnico da equipe responsável pode alterar (exceto cancelar/recusar/faltainformação)
             else if (usuarioLogado.usuarioTipo === 'TECNICO' && chamado.EquipeId) {
                 const tecnicoEquipe = await prisma.tecnicoEquipe.findFirst({
                     where: {
@@ -821,8 +821,8 @@ class ChamadoController {
                 });
 
                 if (tecnicoEquipe) {
-                    // Técnico não pode cancelar ou recusar
-                    if (ChamadoStatus === 'CANCELADO' || ChamadoStatus === 'RECUSADO') {
+                    // Técnico não pode cancelar reportar falta de informação ou recusar o chamado
+                    if (ChamadoStatus === 'CANCELADO' || ChamadoStatus === 'RECUSADO' || ChamadoStatus === 'FALTAINFORMACAO') {
                         return res.status(403).json({
                             error: 'Técnicos não podem cancelar ou recusar chamados'
                         });
@@ -839,10 +839,11 @@ class ChamadoController {
 
             // Validar transições de status
             const transicoesValidas = {
-                'PENDENTE': ['ANALISADO', 'CANCELADO'],
-                'ANALISADO': ['ATRIBUIDO', 'PENDENTE', 'CANCELADO'],
-                'ATRIBUIDO': ['EMATENDIMENTO', 'ANALISADO', 'CANCELADO'],
-                'EMATENDIMENTO': ['CONCLUIDO', 'ATRIBUIDO', 'CANCELADO'],
+                'PENDENTE': ['ANALISADO', 'CANCELADO', 'FALTAINFORMACAO'],
+                'ANALISADO': ['ATRIBUIDO', 'PENDENTE', 'RECUSADO'],
+                'ATRIBUIDO': ['EMATENDIMENTO', 'ANALISADO'],
+                'EMATENDIMENTO': ['CONCLUIDO', 'ATRIBUIDO'],
+                'FALTAINFORMACAO': ['ATRIBUIDO', 'RECUSADO', 'CANCELADO'],
                 'CONCLUIDO': [],
                 'CANCELADO': [],
                 'RECUSADO': []
@@ -1019,6 +1020,7 @@ class ChamadoController {
             res.status(500).json({ error: error.message });
         }
     }
+    
 }
 
 module.exports = new ChamadoController();

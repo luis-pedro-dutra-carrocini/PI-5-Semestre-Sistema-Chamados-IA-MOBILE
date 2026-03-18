@@ -69,7 +69,7 @@ class AtividadeChamadoController {
             }
 
             // Verificar se o chamado está em um status que permite atividades
-            const statusPermitidos = ['ATRIBUIDO', 'EMATENDIMENTO', 'ANALISADO'];
+            const statusPermitidos = ['ATRIBUIDO', 'EMATENDIMENTO'];
             if (!statusPermitidos.includes(chamado.ChamadoStatus)) {
                 return res.status(400).json({
                     error: `Não é possível registrar atividades em chamados com status ${chamado.ChamadoStatus}`
@@ -204,10 +204,10 @@ class AtividadeChamadoController {
             }
 
             // Verificar se o chamado ainda está em andamento
-            const statusPermitidos = ['ATRIBUIDO', 'EMATENDIMENTO', 'ANALISADO'];
+            const statusPermitidos = ['ATRIBUIDO', 'EMATENDIMENTO'];
             if (!statusPermitidos.includes(atividade.Chamado.ChamadoStatus)) {
                 return res.status(400).json({
-                    error: 'Não é possível alterar atividades de chamados concluídos ou cancelados'
+                    error: 'Não é possível alterar atividades de chamados concluídos, recusados ou cancelados'
                 });
             }
 
@@ -767,6 +767,7 @@ class AtividadeChamadoController {
             res.status(500).json({ error: error.message });
         }
     }
+    
 }
 
 module.exports = new AtividadeChamadoController();

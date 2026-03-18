@@ -52,6 +52,11 @@ app.use('/api/tiposuporte', tipoSuporteRouter);
 app.use('/api/chamado', chamadoRouter);
 app.use('/api/atividadechamado', atividadeChamadoRouter);
 
+// Servir os arquivos estáticos da documentação
+// Todos os arquivos dentro de 'public' serão acessíveis.
+// Ex: public/docpi/index.html -> /docpi/index.html
+app.use(express.static(path.join(__dirname, 'public')));
+
 // Health check
 app.get('/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });

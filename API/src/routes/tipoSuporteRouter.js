@@ -18,6 +18,6 @@ router.post('/', tipoSuporteController.cadastrarTipoSuporte);
 router.put('/:id', tipoSuporteController.alterarTipoSuporte);
 router.patch('/:id/status', tipoSuporteController.alterarStatusTipoSuporte);
 
-// NOTA: Não há rota de DELETE, conforme solicitado
+// NOTA: Não há rota de DELETE
 
 module.exports = router;

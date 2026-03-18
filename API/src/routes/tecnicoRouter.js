@@ -21,6 +21,6 @@ router.post('/', tecnicoController.cadastrarTecnico); // Apenas gestor
 router.put('/:id', tecnicoController.alterarTecnico); // Gestor ou próprio técnico
 router.patch('/:id/status', tecnicoController.alterarStatusTecnico); // Apenas gestor
 
-// NOTA: Não há rota de DELETE, conforme solicitado
+// NOTA: Não há rota de DELETE
 
 module.exports = router;

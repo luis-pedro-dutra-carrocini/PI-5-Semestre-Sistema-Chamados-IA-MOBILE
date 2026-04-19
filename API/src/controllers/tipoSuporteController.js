@@ -282,9 +282,7 @@ class TipoSuporteController {
             const {
                 unidadeId,
                 status,
-                nome,
-                pagina = 1,
-                limite = 10
+                nome
             } = req.query;
 
             const usuarioLogado = req.usuario;
@@ -293,7 +291,7 @@ class TipoSuporteController {
             const filtro = {};
 
             // Aplicar filtros de acordo com permissão
-            if (usuarioLogado?.usuarioTipo === 'GESTOR') {
+            if (usuarioLogado.usuarioTipo === 'GESTOR') {
                 const gestorLogado = await prisma.gestor.findUnique({
                     where: { GestorId: usuarioLogado.usuarioId }
                 });
@@ -305,34 +303,66 @@ class TipoSuporteController {
             }
 
             // Aplicar filtros da query
-            if (unidadeId) {
-                // Se for admin ou se o filtro for compatível com a permissão
-                if (usuarioLogado?.usuarioTipo === 'ADMINISTRADOR') {
-                    filtro.UnidadeId = parseInt(unidadeId);
-                } else if (usuarioLogado?.usuarioTipo === 'GESTOR') {
-                    // Verificar se o gestor tem acesso a esta unidade
-                    const gestorLogado = await prisma.gestor.findUnique({
-                        where: { GestorId: usuarioLogado.usuarioId }
-                    });
 
-                    if (gestorLogado && gestorLogado.UnidadeId === parseInt(unidadeId)) {
-                        filtro.UnidadeId = parseInt(unidadeId);
-                    } else {
-                        return res.status(403).json({
-                            error: 'Você não tem permissão para visualizar tipos de suporte desta unidade'
-                        });
-                    }
+            // Se for admin ou se o filtro for compatível com a permissão
+            if (usuarioLogado.usuarioTipo === 'ADMINISTRADOR') {
+                if (unidadeId) {
+                    filtro.UnidadeId = parseInt(unidadeId);
+                }
+            } else if (usuarioLogado.usuarioTipo === 'GESTOR') {
+                // Verificar se o gestor tem acesso a esta unidade
+                const gestorLogado = await prisma.gestor.findUnique({
+                    where: { GestorId: usuarioLogado.usuarioId }
+                });
+
+                if (gestorLogado && gestorLogado.UnidadeId) {
+                    filtro.UnidadeId = gestorLogado.UnidadeId;
+                } else {
+                    return res.status(403).json({
+                        error: 'Você não tem permissão para visualizar tipos de suporte: sem unidade vinculada'
+                    });
+                }
+            } else if (usuarioLogado.usuarioTipo === 'PESSOA') {
+                // Verificar se a pessoa tem acesso a esta unidade
+                const pessoaLogado = await prisma.pessoa.findUnique({
+                    where: { PessoaId: usuarioLogado.usuarioId }
+                });
+
+                if (pessoaLogado && pessoaLogado.UnidadeId) {
+                    filtro.UnidadeId = pessoaLogado.UnidadeId;
+                } else {
+                    return res.status(403).json({
+                        error: 'Você não tem permissão para visualizar tipos de suporte: Sem Unidade vinculada'
+                    });
+                }
+            } else if (usuarioLogado.usuarioTipo === 'TECNICO') {
+                // Verificar se o tecnico tem acesso a esta unidade
+                const tecnicoLogado = await prisma.tecnico.findUnique({
+                    where: { TecnicoId: usuarioLogado.usuarioId }
+                });
+
+                if (tecnicoLogado && tecnicoLogado.UnidadeId) {
+                    filtro.UnidadeId = tecnicoLogado.UnidadeId;
+                } else {
+                    return res.status(403).json({
+                        error: 'Você não tem permissão para visualizar tipos de suporte: Sem Unidade Vinculada'
+                    });
                 }
             }
 
-            if (status) {
-                const statusValidos = ['ATIVO', 'INATIVO'];
-                if (!statusValidos.includes(status)) {
-                    return res.status(400).json({
-                        error: 'Status inválido. Use: ATIVO ou INATIVO'
-                    });
+            // Administrador visualiza ativos e inativos
+            if (usuarioLogado.usuarioTipo === 'ADMINISTRADOR' || usuarioLogado.usuarioTipo === 'GESTOR') {
+                if (status) {
+                    const statusValidos = ['ATIVO', 'INATIVO'];
+                    if (!statusValidos.includes(status)) {
+                        return res.status(400).json({
+                            error: 'Status inválido. Use: ATIVO ou INATIVO'
+                        });
+                    }
+                    filtro.TipSupStatus = status;
                 }
-                filtro.TipSupStatus = status;
+            } else if (usuarioLogado.usuarioTipo === 'PESSOA' || usuarioLogado.usuarioTipo === 'TECNICO') {
+                filtro.TipSupStatus = 'ATIVO';
             }
 
             if (nome) {
@@ -342,46 +372,49 @@ class TipoSuporteController {
                 };
             }
 
-            // Calcular paginação
-            const paginaAtual = parseInt(pagina);
-            const limitePorPagina = parseInt(limite);
-            const skip = (paginaAtual - 1) * limitePorPagina;
+            let [tipos] = [];
+
+            console.log('filtro = ', filtro);
 
             // Buscar tipos de suporte
-            const [tipos, total] = await prisma.$transaction([
-                prisma.tipoSuporte.findMany({
-                    where: filtro,
-                    orderBy: [
-                        { TipSupNom: 'asc' }
-                    ],
-                    skip: skip,
-                    take: limitePorPagina,
-                    include: {
-                        Unidade: {
-                            select: {
-                                UnidadeId: true,
-                                UnidadeNome: true,
-                                UnidadeStatus: true
-                            }
-                        },
-                        _count: {
-                            select: {
-                                Chamado: true
+            if (usuarioLogado.usuarioTipo === 'ADMINISTRADOR' || usuarioLogado.usuarioTipo === 'GESTOR') {
+                [tipos] = await prisma.$transaction([
+                    prisma.tipoSuporte.findMany({
+                        where: filtro,
+                        orderBy: [
+                            { TipSupNom: 'asc' }
+                        ],
+                        include: {
+                            Unidade: {
+                                select: {
+                                    UnidadeId: true,
+                                    UnidadeNome: true,
+                                    UnidadeStatus: true
+                                }
+                            },
+                            _count: {
+                                select: {
+                                    Chamado: true
+                                }
                             }
                         }
-                    }
-                }),
-                prisma.tipoSuporte.count({ where: filtro })
-            ]);
+                    }),
+                    prisma.tipoSuporte.count({ where: filtro })
+                ]);
+            } else if (usuarioLogado.usuarioTipo === 'PESSOA') {
+                [tipos] = await prisma.$transaction([
+                    prisma.tipoSuporte.findMany({
+                        where: filtro,
+                        orderBy: [
+                            { TipSupNom: 'asc' }
+                        ]
+                    }),
+                    prisma.tipoSuporte.count({ where: filtro })
+                ]);
+            }
 
             res.status(200).json({
-                data: tipos,
-                paginacao: {
-                    paginaAtual,
-                    limitePorPagina,
-                    totalRegistros: total,
-                    totalPaginas: Math.ceil(total / limitePorPagina)
-                }
+                data: tipos
             });
 
         } catch (error) {
@@ -431,15 +464,41 @@ class TipoSuporteController {
                 return res.status(404).json({ error: 'Tipo de suporte não encontrado' });
             }
 
-            // Verificar permissão de visualização para gestores
-            if (usuarioLogado?.usuarioTipo === 'GESTOR') {
-                const gestorLogado = await prisma.gestor.findUnique({
-                    where: { GestorId: usuarioLogado.usuarioId }
-                });
+            // Verificar permissão para gestores
+            if (usuarioLogado.usuarioTipo !== 'ADMINISTRADOR') {
+                if (usuarioLogado.usuarioTipo === 'GESTOR') {
+                    const gestorLogado = await prisma.gestor.findUnique({
+                        where: { GestorId: usuarioLogado.usuarioId }
+                    });
 
-                if (gestorLogado && gestorLogado.UnidadeId !== tipoSuporte.UnidadeId) {
+                    if (gestorLogado && gestorLogado.UnidadeId !== tipoSuporte.UnidadeId) {
+                        return res.status(403).json({
+                            error: 'Você só pode visualizar tipos de suporte da sua própria unidade'
+                        });
+                    }
+                } else if (usuarioLogado.usuarioTipo === 'TECNICO') {
+                    const tecnicoLogado = await prisma.tecnico.findUnique({
+                        where: { TecnicoId: usuarioLogado.usuarioId }
+                    });
+
+                    if (tecnicoLogado && tecnicoLogado.UnidadeId !== tipoSuporte.UnidadeId) {
+                        return res.status(403).json({
+                            error: 'Você só pode visualizar tipos de suporte da sua própria unidade'
+                        });
+                    }
+                } else if (usuarioLogado.usuarioTipo === 'PESSOA') {
+                    const pessoaLogada = await prisma.pessoa.findUnique({
+                        where: { PessoaId: usuarioLogado.usuarioId }
+                    });
+
+                    if (pessoaLogada && pessoaLogada.UnidadeId !== tipoSuporte.UnidadeId) {
+                        return res.status(403).json({
+                            error: 'Você só pode visualizar tipos de suporte da sua própria unidade'
+                        });
+                    }
+                } else {
                     return res.status(403).json({
-                        error: 'Você só pode visualizar tipos de suporte da sua própria unidade'
+                        error: 'Tipo de usuário não autorizado para esta ação'
                     });
                 }
             }
@@ -575,7 +634,7 @@ class TipoSuporteController {
     async listarTiposPorUnidade(req, res) {
         try {
             const { unidadeId } = req.params;
-            const { apenasAtivos } = req.query;
+            const { apenasAtivos } = req.body; // Pode ser 'true' ou 'false'
             const usuarioLogado = req.usuario;
 
             const unidadeIdInt = parseInt(unidadeId);
@@ -584,14 +643,40 @@ class TipoSuporteController {
             }
 
             // Verificar permissão para gestores
-            if (usuarioLogado?.usuarioTipo === 'GESTOR') {
-                const gestorLogado = await prisma.gestor.findUnique({
-                    where: { GestorId: usuarioLogado.usuarioId }
-                });
+            if (usuarioLogado.usuarioTipo !== 'ADMINISTRADOR') {
+                if (usuarioLogado.usuarioTipo === 'GESTOR') {
+                    const gestorLogado = await prisma.gestor.findUnique({
+                        where: { GestorId: usuarioLogado.usuarioId }
+                    });
 
-                if (gestorLogado && gestorLogado.UnidadeId !== unidadeIdInt) {
+                    if (gestorLogado && gestorLogado.UnidadeId !== unidadeIdInt) {
+                        return res.status(403).json({
+                            error: 'Você só pode visualizar tipos de suporte da sua própria unidade'
+                        });
+                    }
+                } else if (usuarioLogado.usuarioTipo === 'TECNICO') {
+                    const tecnicoLogado = await prisma.tecnico.findUnique({
+                        where: { TecnicoId: usuarioLogado.usuarioId }
+                    });
+
+                    if (tecnicoLogado && tecnicoLogado.UnidadeId !== unidadeIdInt) {
+                        return res.status(403).json({
+                            error: 'Você só pode visualizar tipos de suporte da sua própria unidade'
+                        });
+                    }
+                } else if (usuarioLogado.usuarioTipo === 'PESSOA') {
+                    const pessoaLogada = await prisma.pessoa.findUnique({
+                        where: { PessoaId: usuarioLogado.usuarioId }
+                    });
+
+                    if (pessoaLogada && pessoaLogada.UnidadeId !== unidadeIdInt) {
+                        return res.status(403).json({
+                            error: 'Você só pode visualizar tipos de suporte da sua própria unidade'
+                        });
+                    }
+                } else {
                     return res.status(403).json({
-                        error: 'Você só pode visualizar tipos de suporte da sua própria unidade'
+                        error: 'Tipo de usuário não autorizado para esta ação'
                     });
                 }
             }
@@ -641,6 +726,7 @@ class TipoSuporteController {
             res.status(500).json({ error: error.message });
         }
     }
+
 }
 
 module.exports = new TipoSuporteController();

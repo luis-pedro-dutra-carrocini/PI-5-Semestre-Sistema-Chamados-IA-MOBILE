@@ -124,20 +124,24 @@ model TipoSuporte {
 }
 
 model Chamado {
-  ChamadoId                 Int             @id @default(autoincrement())
-  TipSupId                  Int?
+  ChamadoId                 Int                 @id @default(autoincrement())
+  TipSupId                  Int?                // Pessoa vai colocar o tipo de suporte, mas os tipos são  cadastrados pelos gestores
   PessoaId                  Int
   EquipeId                  Int?
   UnidadeId                 Int
-  ChamadoTitulo             String?         @db.VarChar(100)
+  ChamadoTitulo             String?             @db.VarChar(100)  // Gestor pode colocar
   ChamadoDescricaoInicial   String
-  ChamadoDescricaoFormatada String?
-  ChamadoDtAbertura         DateTime        @default(now())
-  ChamadoDtPlanejada        DateTime?
-  ChamadoDtEncerramento     DateTime?
-  ChamadoPrioridade         Int?            // De 1 a 10
-  ChamadoUrgencia           ChamadoUrgencia?
-  ChamadoStatus             ChamadoStatus?
+  ChamadoDescricaoFormatada String?             // Descrição mais detalhada pelo gestor
+  ChamadoDiasComProblema    Int                 // Pessoa vai informar quantos dias tem o problema
+  ChamadoRiscoVidaHumana    Boolean             // Pessoa vai informar se tem risco de vida humana
+  ChamadoRiscoVidaAnimal    Boolean             // Pessoa vai informar se tem risco de vida animal
+  ChamadoBloqueioVia        Boolean             // Pessoa vai informar se tem bloqueio de via
+  ChamadoDtAbertura         DateTime            @default(now())
+  ChamadoDtPlanejada        DateTime?           // Gestor vai propor
+  ChamadoDtEncerramento     DateTime?           
+  ChamadoPrioridade         Int?                // De 1 a 10
+  ChamadoUrgencia           ChamadoUrgencia?    // IA vai classificar
+  ChamadoStatus             ChamadoStatus?      @default(PENDENTE)
 
   TipoSuporte               TipoSuporte?        @relation(fields: [TipSupId], references: [TipSupId])
   Pessoa                    Pessoa              @relation(fields: [PessoaId], references: [PessoaId])
@@ -166,8 +170,6 @@ model AtividadeChamado {
   Chamado               Chamado  @relation(fields: [ChamadoId], references: [ChamadoId])
   Tecnico               Tecnico  @relation(fields: [TecnicoId], references: [TecnicoId])
 }
-
-
 
 
 
@@ -222,27 +224,15 @@ enum TipSupStatus {
   BLOQUEADOIA
 }
 
-// Status Chamados
-/*
-PENDENTE            // Pessoa acabou de abrir
-ANALISADO           // IA ou Pessoa analisou
-ATRIBUIDO           // Pessoa atribuiu a uma equipe
-EMATENDIMENTO       // Equipe iniciou o atendimento
-CONCLUIDO
-CANDELADO           // Pessoa que abriu cancelou
-RECUSADO            // Gestor Recusou
-FALTAINFORMACAO     // IA Identifivou que falta informação, gestor precisa analisar e solitar detalhes para pessoa que abriu
-*/
-
 enum ChamadoStatus {
-  PENDENTE
-  ANALISADO
-  ATRIBUIDO
-  EMATENDIMENTO
-  CONCLUIDO
-  CANDELADO
-  RECUSADO
-  FALTAINFORMACAO
+  PENDENTE        // Pessoa acabou de abrir
+  ANALISADO       // IA ou Gestor analisou
+  ATRIBUIDO       // Gestor atribuiu a uma equipe
+  EMATENDIMENTO   // Equipe iniciou o atendimento
+  CONCLUIDO       // Equipe concluiu o trabalho
+  CANCELADO       // Pessoa que abriu cancelou
+  RECUSADO        // Gestor Recusou
+  FALTAINFORMACAO // Gestor Identifivou que falta informação, gestor precisa solitar detalhes para pessoa que abriu
 }
 
 enum ChamadoUrgencia {

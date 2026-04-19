@@ -137,7 +137,7 @@ class AdminController {
                     return res.status(400).json({ error: 'A nova senha deve ter no mínimo 6 caracteres' });
                 }
 
-                const senhaComPepper = 'ksngp4hg98hgn5gqh4ghb5gw73bhgb34ht483hg' + AdministradorSenha.trim();
+                const senhaComPepper = process.env.PEPPER_SENHA_ADMIN + AdministradorSenha.trim();
                 const salt = await bcrypt.genSalt(10);
                 dadosAtualizacao.AdministradorSenha = await bcrypt.hash(senhaComPepper, salt);
             }

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -147,11 +148,30 @@
             letter-spacing: 0.5px;
         }
 
-        .method.get { background: #e3f2fd; color: #1976d2; }
-        .method.post { background: #e8f5e9; color: #2e7d32; }
-        .method.put { background: #fff3e0; color: #f57c00; }
-        .method.patch { background: #ffebee; color: #d66c03; }
-        .method.delete { background: #ffebee; color: #c62828; }
+        .method.get {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .method.post {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .method.put {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+
+        .method.patch {
+            background: #ffebee;
+            color: #d66c03;
+        }
+
+        .method.delete {
+            background: #ffebee;
+            color: #c62828;
+        }
 
         /* Quick Stats */
         .quick-stats {
@@ -200,20 +220,22 @@
             .api-header h1 {
                 font-size: 2em;
             }
-            
+
             .quick-stats {
                 grid-template-columns: repeat(2, 1fr);
             }
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <!-- Header -->
         <div class="api-header">
             <h1>🚀 API - Sistema de Gestão de Chamados</h1>
-            <p>Documentação completa da API para gerenciamento de chamados técnicos, pessoas e atividades. Esta API RESTful permite o controle total do fluxo de atendimento.</p>
-            
+            <p>Documentação completa da API para gerenciamento de chamados técnicos, pessoas e atividades. Esta API
+                RESTful permite o controle total do fluxo de atendimento.</p>
+
             <div>
                 <span class="api-badge">REST API</span>
                 <span class="api-badge">JSON</span>
@@ -248,13 +270,14 @@
 
         <!-- Routes Cards -->
         <h2 style="color: white; margin: 40px 0 20px; text-align: center;">📚 Classes de Rotas Disponíveis</h2>
-        
+
         <div class="routes-grid">
             <!-- Pessoa Card -->
             <a href="pessoa.html" class="route-card">
                 <div class="route-icon">
                     <svg viewBox="0 0 24 24">
-                        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                        <path
+                            d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
                     </svg>
                 </div>
                 <h3>👤 Pessoa</h3>
@@ -272,7 +295,8 @@
             <a href="tecnico.html" class="route-card">
                 <div class="route-icon">
                     <svg viewBox="0 0 24 24">
-                        <path d="M20 9V7c0-1.1-.9-2-2-2h-4c0-1.66-1.34-3-3-3S8 3.34 8 5H4c-1.1 0-2 .9-2 2v2c0 1.1.9 2 2 2h4c0 1.66 1.34 3 3 3s3-1.34 3-3h4c1.1 0 2-.9 2-2zM4 7V5h4c0 .55.45 1 1 1s1-.45 1-1h4v2H4zm12 6h2v5h-2v-5zM6 13h2v5H6v-5z"/>
+                        <path
+                            d="M20 9V7c0-1.1-.9-2-2-2h-4c0-1.66-1.34-3-3-3S8 3.34 8 5H4c-1.1 0-2 .9-2 2v2c0 1.1.9 2 2 2h4c0 1.66 1.34 3 3 3s3-1.34 3-3h4c1.1 0 2-.9 2-2zM4 7V5h4c0 .55.45 1 1 1s1-.45 1-1h4v2H4zm12 6h2v5h-2v-5zM6 13h2v5H6v-5z" />
                     </svg>
                 </div>
                 <h3>🔧 Técnico</h3>
@@ -290,7 +314,8 @@
             <a href="chamado.html" class="route-card">
                 <div class="route-icon">
                     <svg viewBox="0 0 24 24">
-                        <path d="M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4V4c0-1.1-.9-2-2-2zm-3 12H7v-2h10v2zm0-4H7V8h10v2z"/>
+                        <path
+                            d="M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4V4c0-1.1-.9-2-2-2zm-3 12H7v-2h10v2zm0-4H7V8h10v2z" />
                     </svg>
                 </div>
                 <h3>📋 Chamado</h3>
@@ -308,7 +333,8 @@
             <a href="atividade.html" class="route-card">
                 <div class="route-icon">
                     <svg viewBox="0 0 24 24">
-                        <path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1s-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm4 12h-4v3l-5-5 5-5v3h4v4z"/>
+                        <path
+                            d="M19 3h-4.18C14.4 1.84 13.3 1 12 1s-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm4 12h-4v3l-5-5 5-5v3h4v4z" />
                     </svg>
                 </div>
                 <h3>📝 Atividade de Chamado</h3>
@@ -321,31 +347,53 @@
                 </div>
                 <p style="margin-top: 15px; font-size: 0.9em; color: #667eea;">/api/atividadechamado →</p>
             </a>
+
+            <!-- Atividade de Chamado Card -->
+            <a href="tipoChamado.html" class="route-card">
+                <div class="route-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                        class="bi bi-list-check" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd"
+                            d="M5 11.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5M3.854 2.146a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 1 1 .708-.708L2 3.293l1.146-1.147a.5.5 0 0 1 .708 0m0 4a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 1 1 .708-.708L2 7.293l1.146-1.147a.5.5 0 0 1 .708 0m0 4a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 0 1 .708-.708l.146.147 1.146-1.147a.5.5 0 0 1 .708 0" />
+                    </svg>
+                </div>
+                <h3>📝 Tipos de Chamado</h3>
+                <p>Tipos de chamados para cada unidade.</p>
+                <div class="route-methods">
+                    <span class="method get">GET</span>
+                    <span class="method post">POST</span>
+                    <span class="method put">PUT</span>
+                    <span class="method patch">PATCH</span>
+                </div>
+                <p style="margin-top: 15px; font-size: 0.9em; color: #667eea;">/api/tiposuporte →</p>
+            </a>
         </div>
 
         <!-- Informações Adicionais -->
-        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 15px; padding: 40px; margin-top: 30px; color: white;">
+        <div
+            style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 15px; padding: 40px; margin-top: 30px; color: white;">
             <h2 style="margin-bottom: 20px;">📌 Informações Importantes</h2>
-            
+
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px;">
                 <div>
                     <h3>🔐 Autenticação</h3>
-                    <p>Todos os endpoints requerem autenticação via Bearer Token, exeto os endpoints de login. Inclua no header: Authorization: Bearer {token}</p>
+                    <p>Todos os endpoints requerem autenticação via Bearer Token, exeto os endpoints de login. Inclua no
+                        header: Authorization: Bearer {token}</p>
                 </div>
-                
+
                 <div>
                     <h3>📦 Formato dos Dados</h3>
                     <p>Content-Type: application/json<br>
-                    Respostas sempre em JSON estruturado</p>
+                        Respostas sempre em JSON estruturado</p>
                 </div>
-                
+
                 <div>
                     <h3>⚠️ Códigos de Status</h3>
                     <p>200: Sucesso<br>
-                    201: Criado<br>
-                    400: Erro de requisição<br>
-                    401: Não autorizado<br>
-                    404: Não encontrado</p>
+                        201: Criado<br>
+                        400: Erro de requisição<br>
+                        401: Não autorizado<br>
+                        404: Não encontrado</p>
                 </div>
             </div>
         </div>
@@ -374,11 +422,12 @@
         // Adiciona classe ativa nos cards quando clicados
         const cards = document.querySelectorAll('.route-card');
         cards.forEach(card => {
-            card.addEventListener('click', function() {
+            card.addEventListener('click', function () {
                 cards.forEach(c => c.style.borderColor = 'transparent');
                 this.style.borderColor = '#667eea';
             });
         });
     </script>
 </body>
+
 </html>

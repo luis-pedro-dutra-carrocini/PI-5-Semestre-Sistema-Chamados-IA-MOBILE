@@ -219,7 +219,8 @@ class PessoaController {
 
             // Criptografar senha
             const salt = await bcrypt.genSalt(10);
-            const senhaHash = await bcrypt.hash(PessoaSenha.trim(), salt);
+            const senhaComPepper = process.env.PEPPER_SENHA_PESSOA + TecnicoSenha.trim();
+            const senhaHash = await bcrypt.hash(senhaComPepper, salt);
 
             // Criar pessoa
             const pessoa = await prisma.pessoa.create({
@@ -438,7 +439,8 @@ class PessoaController {
                     return res.status(400).json({ error: 'A senha deve ter no mínimo 6 caracteres' });
                 }
                 const salt = await bcrypt.genSalt(10);
-                dadosAtualizacao.PessoaSenha = await bcrypt.hash(PessoaSenha.trim(), salt);
+                const senhaComPepper = process.env.PEPPER_SENHA_PESSOA + PessoaSenha.trim();
+                dadosAtualizacao.PessoaSenha = await bcrypt.hash(senhaComPepper, salt);
             }
 
             if (PessoaStatus !== undefined && usuarioLogado.usuarioTipo === 'GESTOR') {

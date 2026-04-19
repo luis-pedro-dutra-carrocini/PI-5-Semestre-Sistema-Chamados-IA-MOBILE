@@ -269,7 +269,8 @@ class TecnicoController {
 
             // Criptografar senha
             const salt = await bcrypt.genSalt(10);
-            const senhaHash = await bcrypt.hash(TecnicoSenha.trim(), salt);
+            const senhaComPepper = process.env.PEPPER_SENHA_TECNICO + TecnicoSenha.trim();
+            const senhaHash = await bcrypt.hash(senhaComPepper, salt);
 
             // Criar técnico
             const tecnico = await prisma.tecnico.create({
@@ -566,7 +567,8 @@ class TecnicoController {
                     return res.status(400).json({ error: 'A senha deve ter no mínimo 6 caracteres' });
                 }
                 const salt = await bcrypt.genSalt(10);
-                dadosAtualizacao.TecnicoSenha = await bcrypt.hash(TecnicoSenha.trim(), salt);
+                const senhaComPepper = process.env.PEPPER_SENHA_TECNICO + TecnicoSenha.trim();
+                dadosAtualizacao.TecnicoSenha = await bcrypt.hash(senhaComPepper, salt);
             }
 
             if (TecnicoStatus !== undefined && usuarioLogado.usuarioTipo === 'GESTOR') {

@@ -20,11 +20,17 @@ export interface Chamado {
   ChamadoStatus: 'PENDENTE' | 'ANALISADO' | 'ATRIBUIDO' | 'EMATENDIMENTO' | 'CONCLUIDO' | 'CANCELADO' | 'RECUSADO';
   ChamadoDtAbertura: string;
   ChamadoDtEncerramento?: string;
+  ChamadoDtPlanejada?: string;
+  ChamadoDescricaoInicial?: string;
   PessoaId: number;
   UnidadeId: number;
   TipSupId?: number;
   EquipeId?: number;
   AtividadeChamado?: Atividade[];
+  ChamadoDiasComProblema: 0;
+  ChamadoRiscoVidaHumana: false;
+  ChamadoRiscoVidaAnimal: false;
+  ChamadoBloqueioVia: false;
   Pessoa: {
     PessoaId: number;
     PessoaNome: string;
@@ -125,10 +131,11 @@ export async function alterarChamado(
     TipSupId?: number | null;
     EquipeId?: number | null;
     ChamadoTitulo?: string;
-    ChamadoDescricaoFormatada?: string;
+    ChamadoDescricaoInicial?: string;
     ChamadoPrioridade?: number;
     ChamadoUrgencia?: 'BAIXA' | 'MEDIA' | 'ALTA' | 'URGENTE';
     ChamadoStatus?: string;
+
   }
 ) {
   try {
@@ -150,9 +157,9 @@ export async function atribuirEquipe(id: number, equipeId: number) {
   }
 }
 
-export async function alterarStatus(id: number, status: string) {
+export async function alterarStatus(id: number, status: string, motivoRecusa?: string) {
   try {
-    const response = await apiClient.patch(`/chamado/${id}/status`, { ChamadoStatus: status });
+    const response = await apiClient.patch(`/chamado/${id}/status`, { ChamadoStatus: status, ChamadoDescricaoFormatada: motivoRecusa });
     return response.data;
   } catch (error) {
     console.error('Erro ao alterar status:', error);

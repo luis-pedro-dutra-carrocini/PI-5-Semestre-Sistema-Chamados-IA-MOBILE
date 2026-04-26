@@ -6,13 +6,8 @@ class ChamadoController {
     // Abrir novo chamado (apenas PESSOA)
     async abrirChamado(req, res) {
         try {
-            const { PessoaId, ChamadoDescricaoInicial, ChamadoDiasComProblema, ChamadoRiscoVidaHumana, ChamadoRiscoVidaAnimal, ChamadoBloqueioVia, TipSupId } = req.body;
+            const { ChamadoDescricaoInicial, ChamadoDiasComProblema, ChamadoRiscoVidaHumana, ChamadoRiscoVidaAnimal, ChamadoBloqueioVia, TipSupId } = req.body;
             const usuarioLogado = req.usuario;
-
-            // Validações básicas
-            if (!PessoaId) {
-                return res.status(400).json({ error: 'ID da pessoa é obrigatório' });
-            }
 
             if (!ChamadoDescricaoInicial || !ChamadoDescricaoInicial.trim()) {
                 return res.status(400).json({ error: 'Descrição inicial do chamado é obrigatória' });
@@ -46,11 +41,7 @@ class ChamadoController {
             }
 
             // Verificar se a pessoa logada é a mesma que está abrindo o chamado
-            if (usuarioLogado.usuarioId !== parseInt(PessoaId)) {
-                return res.status(403).json({
-                    error: 'Você só pode abrir chamados para você mesmo'
-                });
-            }
+            const PessoaId = usuarioLogado.usuarioId;
 
             // Buscar pessoa
             const pessoa = await prisma.pessoa.findUnique({
@@ -114,7 +105,8 @@ class ChamadoController {
                     ChamadoBloqueioVia: ChamadoBloqueioVia,
                     ChamadoDiasComProblema: parseInt(ChamadoDiasComProblema),
                     ChamadoRiscoVidaHumana: ChamadoRiscoVidaHumana,
-                    ChamadoRiscoVidaAnimal: ChamadoRiscoVidaAnimal
+                    ChamadoRiscoVidaAnimal: ChamadoRiscoVidaAnimal,
+                    TipSupId: parseInt(TipSupId)
                 },
                 include: {
                     Pessoa: {
@@ -458,7 +450,7 @@ class ChamadoController {
                 });
 
                 if (tecnico) {
-                    filtro.OR = [
+                    filtro.AND = [
                         { UnidadeId: tecnico.UnidadeId },
                         { EquipeId: { in: tecnico.TecnicoEquipe.map(te => te.EquipeId) } }
                     ];
@@ -912,11 +904,11 @@ class ChamadoController {
 
             // Validar transições de status
             const transicoesValidas = {
-                'PENDENTE': ['ANALISADO', 'CANCELADO', 'FALTAINFORMACAO'],
-                'ANALISADO': ['ATRIBUIDO', 'PENDENTE', 'RECUSADO'],
+                'PENDENTE': ['ANALISADO', 'CANCELADO', 'FALTAINFORMACAO', 'RECUSADO'],
+                'ANALISADO': ['ATRIBUIDO', 'PENDENTE', 'RECUSADO', 'FALTAINFORMACAO'],
                 'ATRIBUIDO': ['EMATENDIMENTO', 'ANALISADO'],
                 'EMATENDIMENTO': ['CONCLUIDO', 'ATRIBUIDO'],
-                'FALTAINFORMACAO': ['ATRIBUIDO', 'RECUSADO', 'CANCELADO'],
+                'FALTAINFORMACAO': ['ATRIBUIDO', 'RECUSADO', 'CANCELADO', 'PENDENTE', 'ANALISADO'],
                 'CONCLUIDO': [],
                 'CANCELADO': [],
                 'RECUSADO': []
@@ -1100,7 +1092,7 @@ class ChamadoController {
                     by: ['ChamadoUrgencia'],
                     where: {
                         ...filtro,
-                        ChamadoUrgencia: { not: null }
+                        ChamadoUrgencia: { not: null }, ChamadoStatus: { not: 'CANCELADO', not: 'RECUSADO' }
                     },
                     _count: true
                 }),

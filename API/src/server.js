@@ -3,13 +3,17 @@ const express = require('express');
 const path = require('path');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
+const swaggerUi = require('swagger-ui-express');
+const swaggerSpec = require('./swaggerConfig');
 
 const app = express();
 
+const allowedOrigins = process.env.CORS_ORIGIN?.split(',');
+
 const corsOptions = {
-    origin: 'http://localhost:3000',
+    origin: allowedOrigins,
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], // Inclua OPTIONS
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
     exposedHeaders: ['Content-Range', 'X-Content-Range'],
     preflightContinue: false,
@@ -62,7 +66,10 @@ app.get('/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
 // Iniciar servidor
 app.listen(PORT, () => {
     console.log(`📖 Servidor rodando na porta ${PORT}`);
+    console.log(`Documentação disponível em http://localhost:${PORT}/api-docs`);
 });

@@ -417,7 +417,7 @@ export default function GestorDashboard() {
         </div>
       </div>
 
-      {/* Gráfico de Distribuição (placeholder) */}
+      {/* Gráfico de Distribuição (placeholder)}
       <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-6">
         <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">
           Distribuição de Chamados por Status
@@ -434,6 +434,7 @@ export default function GestorDashboard() {
           </div>
         </div>
       </div>
+      {*/}
 
       {/* Informações adicionais */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-500 dark:text-gray-400">

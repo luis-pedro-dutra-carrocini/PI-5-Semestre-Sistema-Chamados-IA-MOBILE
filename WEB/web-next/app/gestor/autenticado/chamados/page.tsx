@@ -29,7 +29,10 @@ import {
   Shield,
   ShieldAlert,
   ShieldBan,
-  ShieldX
+  ShieldX,
+  TriangleAlert,
+  ClockAlert,
+  CircleAlert
 } from "lucide-react"
 import { listarChamados, getEstatisticas, type Chamado, type ChamadoFilters, type Estatisticas } from "@/lib/chamado-service"
 import { format } from "date-fns"
@@ -103,20 +106,13 @@ export default function ChamadosPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState<ChamadoFilters>({
-    //pagina: 1,
-    //limite: 10,
-    status: undefined,
+    status: 'PENDENTE',
     urgencia: undefined,
     dataInicio: undefined,
     dataFim: undefined
   });
-  // const [paginacao, setPaginacao] = useState({
-  //   //paginaAtual: 1,
-  //   //limitePorPagina: 10,
-  //   totalRegistros: 0,
-  //   totalPaginas: 1
-  // });
-  const [showFilters, setShowFilters] = useState(false);
+
+  const [showFilters, setShowFilters] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
 
   const [paginaAtual, setPaginaAtual] = useState(1);
@@ -227,7 +223,8 @@ export default function ChamadosPage() {
     { value: 'EMATENDIMENTO', label: 'Em Atendimento', color: 'purple' },
     { value: 'CONCLUIDO', label: 'Concluído', color: 'green' },
     { value: 'CANCELADO', label: 'Cancelado', color: 'gray' },
-    { value: 'RECUSADO', label: 'Recusado', color: 'red' }
+    { value: 'RECUSADO', label: 'Recusado', color: 'red' },
+    { value: 'FALTAINFORMACAO', label: 'Falta Informação', color: 'yellow' }
   ];
 
   return (
@@ -248,81 +245,84 @@ export default function ChamadosPage() {
 
       {/* Estatísticas Rápidas */}
       {estatisticas && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-gray-500 dark:text-gray-400">Total</span>
-              <BarChart3 size={18} className="text-blue-600 dark:text-blue-400" />
-            </div>
-            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-              {estatisticas.total}
-            </p>
-            <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-              Últimos 30 dias
-            </p>
-          </div>
+        <div>
+          <div>
+            <p>Fases</p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-gray-500 dark:text-gray-400">Total</span>
+                  <BarChart3 size={18} className="text-blue-600 dark:text-blue-400" />
+                </div>
+                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  {estatisticas.total}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                  Últimos 30 dias
+                </p>
+              </div>
 
-          <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-gray-500 dark:text-gray-400">Pendentes</span>
-              <Clock size={18} className="text-yellow-600 dark:text-yellow-400" />
-            </div>
-            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-              {estatisticas.porStatus.PENDENTE || 0}
-            </p>
-          </div>
+              <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-gray-500 dark:text-gray-400">Pendentes</span>
+                  <Clock size={18} className="text-yellow-800 dark:text-yellow-400" />
+                </div>
+                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  {estatisticas.porStatus.PENDENTE || 0}
+                </p>
+              </div>
 
-          <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-gray-500 dark:text-gray-400">Analisados</span>
-              <BookCheck size={18} className="text-green-600 dark:text-purple-400" />
-            </div>
-            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-              {estatisticas.porStatus.ANALISADO || 0}
-            </p>
-          </div>
+              <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-gray-500 dark:text-gray-400">Analisados</span>
+                  <Search size={18} className="text-blue-800 dark:text-blue-400" />
+                </div>
+                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  {estatisticas.porStatus.ANALISADO || 0}
+                </p>
+              </div>
 
-          <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-gray-500 dark:text-gray-400">Atribuídos</span>
-              <ListTodo size={18} className="text-green-600 dark:text-green-400" />
-            </div>
-            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-              {estatisticas.porStatus.ATRIBUIDO || 0}
-            </p>
-          </div>
+              <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-gray-500 dark:text-gray-400">Atribuídos</span>
+                  <Users size={18} className="text-indigo-800 dark:text-indigo-400" />
+                </div>
+                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  {estatisticas.porStatus.ATRIBUIDO || 0}
+                </p>
+              </div>
 
-          <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-gray-500 dark:text-gray-400">Em Atendimento</span>
-              <PlayCircle size={18} className="text-purple-600 dark:text-purple-400" />
-            </div>
-            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-              {estatisticas.porStatus.EMATENDIMENTO || 0}
-            </p>
-          </div>
+              <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-gray-500 dark:text-gray-400">Em Atendimento</span>
+                  <PlayCircle size={18} className="text-purple-800 dark:text-purple-400" />
+                </div>
+                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  {estatisticas.porStatus.EMATENDIMENTO || 0}
+                </p>
+              </div>
 
-          <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-gray-500 dark:text-gray-400">Concluídos</span>
-              <CheckCircle size={18} className="text-green-600 dark:text-green-400" />
-            </div>
-            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-              {estatisticas.porStatus.CONCLUIDO || 0}
-            </p>
-          </div>
+              <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-gray-500 dark:text-gray-400">Concluídos</span>
+                  <CheckCircle size={18} className="text-green-800 dark:text-green-400" />
+                </div>
+                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  {estatisticas.porStatus.CONCLUIDO || 0}
+                </p>
+              </div>
 
-          <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-gray-500 dark:text-gray-400">Recusados</span>
-              <ShieldBan size={18} className="text-green-600 dark:text-red-400" />
-            </div>
-            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-              {estatisticas.porStatus.RECUSADO || 0}
-            </p>
-          </div>
+              <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-gray-500 dark:text-gray-400">Recusados</span>
+                  <ShieldBan size={18} className="text-red-800 dark:text-red-400" />
+                </div>
+                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  {estatisticas.porStatus.RECUSADO || 0}
+                </p>
+              </div>
 
-          <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-4">
+              {/*<div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-4">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm text-gray-500 dark:text-gray-400">Cancelados</span>
               <XCircle size={18} className="text-green-600 dark:text-red-400" />
@@ -330,20 +330,67 @@ export default function ChamadosPage() {
             <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
               {estatisticas.porStatus.CANCELADO || 0}
             </p>
-          </div>
+          </div>{*/}
 
-          <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-gray-500 dark:text-gray-400">Falta Informação</span>
-              <AlertCircle size={18} className="text-green-600 dark:text-yellow-400" />
+              <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-gray-500 dark:text-gray-400">Falta Informação</span>
+                  <AlertCircle size={18} className="text-green-800 dark:text-yellow-400" />
+                </div>
+                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  {estatisticas.porStatus.CANCELADO || 0}
+                </p>
+              </div>
+
             </div>
-            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-              {estatisticas.porStatus.CANCELADO || 0}
-            </p>
           </div>
+          <br />
+          <div>
+            <p>Prioridades</p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="bg-white dark:bg-gray-900 rounded-lg border border-red-600 dark:border-red-400 p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-gray-500 dark:text-gray-400">Urgênte</span>
+                  <TriangleAlert size={18} className="text-red-800 dark:text-red-400" />
+                </div>
+                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  {estatisticas.porUrgencia.URGENTE || 0}
+                </p>
+              </div>
 
+              <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-gray-500 dark:text-gray-400">Alta</span>
+                  <TriangleAlert size={18} className="text-orange-800 dark:text-orange-400" />
+                </div>
+                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  {estatisticas.porUrgencia.ALTA || 0}
+                </p>
+              </div>
+
+              <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-gray-500 dark:text-gray-400">Média</span>
+                  <TriangleAlert size={18} className="text-yellow-800 dark:text-yellow-400" />
+                </div>
+                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  {estatisticas.porUrgencia.MEDIA || 0}
+                </p>
+              </div>
+
+              <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-gray-500 dark:text-gray-400">Baixa</span>
+                  <TriangleAlert size={18} className="text-green-600 dark:text-green-400" />
+                </div>
+                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  {estatisticas.porUrgencia.BAIXA || 0}
+                </p>
+              </div>
+
+            </div>
+          </div>
         </div>
-
       )}
 
       {/* Filtros */}
@@ -562,7 +609,7 @@ export default function ChamadosPage() {
               >
                 <ChevronLeft size={18} />
               </button>
-              
+
               {/* Botões de página dinâmicos */}
               <div className="flex gap-1">
                 {Array.from({ length: Math.min(5, totalPaginas) }, (_, i) => {
@@ -576,23 +623,22 @@ export default function ChamadosPage() {
                   } else {
                     pageNum = paginaAtual - 2 + i;
                   }
-                  
+
                   return (
                     <button
                       key={pageNum}
                       onClick={() => handlePageChange(pageNum)}
-                      className={`px-3 py-2 rounded-lg text-sm transition-colors ${
-                        paginaAtual === pageNum
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
-                      }`}
+                      className={`px-3 py-2 rounded-lg text-sm transition-colors ${paginaAtual === pageNum
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
+                        }`}
                     >
                       {pageNum}
                     </button>
                   );
                 })}
               </div>
-              
+
               <button
                 onClick={() => handlePageChange(paginaAtual + 1)}
                 disabled={paginaAtual === totalPaginas}
@@ -601,7 +647,7 @@ export default function ChamadosPage() {
                 <ChevronRight size={18} />
               </button>
             </div>
-            
+
             {/* Seletor de itens por página */}
             <div className="flex items-center gap-2">
               <span className="text-sm text-gray-500 dark:text-gray-400">Itens por página:</span>

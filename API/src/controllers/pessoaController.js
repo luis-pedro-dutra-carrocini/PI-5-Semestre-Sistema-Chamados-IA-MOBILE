@@ -219,7 +219,7 @@ class PessoaController {
 
             // Criptografar senha
             const salt = await bcrypt.genSalt(10);
-            const senhaComPepper = process.env.PEPPER_SENHA_PESSOA + TecnicoSenha.trim();
+            const senhaComPepper = process.env.PEPPER_SENHA_PESSOA + PessoaSenha.trim();
             const senhaHash = await bcrypt.hash(senhaComPepper, salt);
 
             // Criar pessoa

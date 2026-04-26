@@ -1,7 +1,7 @@
 import axios from 'axios';
 import Cookies from 'js-cookie';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export const api = {
   baseURL: API_URL,
@@ -17,7 +17,7 @@ export const api = {
 
 export const apiClient = axios.create({
   baseURL: API_URL,
-  timeout: Number(process.env.NEXT_PUBLIC_API_TIMEOUT) || 30000,
+  timeout: Number(process.env.NEXT_PUBLIC_API_TIMEOUT) || 20000,
   headers: {
     'Content-Type': 'application/json',
   },

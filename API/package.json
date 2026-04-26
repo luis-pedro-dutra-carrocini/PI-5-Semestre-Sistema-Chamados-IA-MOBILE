@@ -1,7 +1,7 @@
 {
-  "name": "api-biblia-catolica",
+  "name": "api-chamados-publicos",
   "version": "1.0.0",
-  "description": "API APP Cortes Top",
+  "description": "API Chamados Públicos",
   "type": "commonjs",
   "main": "src/server.js",
   "scripts": {
@@ -14,8 +14,8 @@
     "prisma:seed": "prisma db seed"
   },
   "keywords": [
-    "biblia",
-    "catolica",
+    "chamados",
+    "publicos",
     "api"
   ],
   "author": "",
@@ -36,6 +36,8 @@
     "mysql2": "^3.15.3",
     "nodemailer": "^7.0.12",
     "path": "^0.12.7",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1",
     "url": "^0.11.4"
   },
   "devDependencies": {

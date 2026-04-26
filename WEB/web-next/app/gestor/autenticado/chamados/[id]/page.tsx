@@ -28,7 +28,9 @@ import {
   FileSpreadsheet,
   X,
   Shield,
-  ShieldX
+  ShieldX,
+  ShieldBan,
+  CircleAlert
 } from "lucide-react"
 import { buscarChamadoPorId, alterarStatus, atribuirEquipe, type Chamado } from "@/lib/chamado-service"
 import { listarEquipes, type Equipe } from "@/lib/equipe-service"
@@ -217,7 +219,8 @@ export default function DetalhesChamadoPage() {
     { value: 'PENDENTE', label: 'Pendente', icon: Clock },
     { value: 'ANALISADO', label: 'Analisado', icon: Search },
     { value: 'ATRIBUIDO', label: 'Atribuído', icon: Users },
-    { value: 'RECUSADO', label: 'Recusado', icon: HelpCircle }
+    { value: 'FALTAINFORMACAO', label: 'Falta Informação', icon: CircleAlert },
+    { value: 'RECUSADO', label: 'Recusado', icon: ShieldBan }
   ];
 
   return (
@@ -374,7 +377,7 @@ export default function DetalhesChamadoPage() {
         </div>
       )}
 
-      {/* MNotivo da Recusa */}
+      {/* Motivo da Recusa */}
       {chamado.ChamadoDescricaoFormatada && chamado.ChamadoStatus === 'RECUSADO' && (
         <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-6">
           <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2 mb-4">
@@ -391,17 +394,19 @@ export default function DetalhesChamadoPage() {
       <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-6">
         <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-4 flex items-center gap-2">
           <Tag size={16} />
-          Ações do Gestor
+          Alterar Status
         </h3>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-5">
           {statusOptions.map((option) => {
             const Icon = option.icon;
             const isCurrent = chamado.ChamadoStatus === option.value;
             const isDisabled =
               (chamado.ChamadoStatus === 'CONCLUIDO' && option.value !== 'CONCLUIDO') ||
               (chamado.ChamadoStatus === 'CANCELADO' && option.value !== 'CANCELADO') ||
-              (chamado.ChamadoStatus === 'RECUSADO' && option.value !== 'RECUSADO');
+              (chamado.ChamadoStatus === 'RECUSADO' && option.value !== 'RECUSADO') || 
+              (chamado.ChamadoStatus === 'FALTAINFORMACAO' && option.value === 'ATRIBUIDO') ||
+              (chamado.ChamadoStatus === 'ATRIBUIDO' && option.value === 'FALTAINFORMACAO');
 
             return (
               <button
@@ -479,6 +484,8 @@ export default function DetalhesChamadoPage() {
                 <X size={20} />
               </button>
             </div>
+            <p>Essa ação não poderá ser desfeita</p>
+            <br />
             <textarea
               value={motivoRecusa}
               onChange={(e) => setMotivoRecusa(e.target.value)}

@@ -34,9 +34,7 @@ export default function GestorLogin() {
       Cookies.set("gestor_user", JSON.stringify(data.usuario), { expires: 1 / 3 })
 
       // Forçar uma pequena pausa para garantir que os cookies foram salvos
-      setTimeout(() => {
-        router.push("/gestor/autenticado/dashboard")
-      }, 100)
+      window.location.href = "/gestor/autenticado/dashboard";
 
     } catch (error: any) {
       console.error("Erro no login:", error)

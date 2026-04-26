@@ -17,7 +17,7 @@ export interface Chamado {
   ChamadoDescricaoFormatada?: string;
   ChamadoPrioridade?: number;
   ChamadoUrgencia?: 'BAIXA' | 'MEDIA' | 'ALTA' | 'URGENTE';
-  ChamadoStatus: 'PENDENTE' | 'ANALISADO' | 'ATRIBUIDO' | 'EMATENDIMENTO' | 'CONCLUIDO' | 'CANCELADO' | 'RECUSADO';
+  ChamadoStatus: 'PENDENTE' | 'ANALISADO' | 'ATRIBUIDO' | 'EMATENDIMENTO' | 'CONCLUIDO' | 'CANCELADO' | 'RECUSADO' | 'FALTAINFORMACAO';
   ChamadoDtAbertura: string;
   ChamadoDtEncerramento?: string;
   ChamadoDtPlanejada?: string;
@@ -170,6 +170,7 @@ export async function alterarStatus(id: number, status: string, motivoRecusa?: s
 export async function getEstatisticas(periodo?: string) {
   try {
     const params = periodo ? `?periodo=${periodo}` : '';
+    console.log('Buscando estatísticas com período:', periodo);
     const response = await apiClient.get(`/chamado/estatisticas${params}`);
     return response.data.data;
   } catch (error) {

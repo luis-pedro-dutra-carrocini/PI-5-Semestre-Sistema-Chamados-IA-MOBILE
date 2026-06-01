@@ -47,14 +47,14 @@ export interface ListaTiposSuporteResponse {
 export async function listarTiposSuporte(filters: TipoSuporteFilters = {}): Promise<ListaTiposSuporteResponse> {
   try {
     const params = new URLSearchParams();
-    
+
     if (filters.status) params.append('status', filters.status);
     if (filters.nome) params.append('nome', filters.nome);
     if (filters.unidadeId) params.append('unidadeId', filters.unidadeId.toString());
     if (filters.pagina) params.append('pagina', filters.pagina.toString());
     if (filters.limite) params.append('limite', filters.limite.toString());
     if (filters.apenasAtivos) params.append('apenasAtivos', 'true');
-    
+
     const response = await apiClient.get(`/tiposuporte?${params.toString()}`);
     return response.data;
   } catch (error) {
@@ -77,7 +77,7 @@ export async function listarTiposPorUnidade(unidadeId: number, apenasAtivos?: bo
   try {
     const params = new URLSearchParams();
     if (apenasAtivos) params.append('apenasAtivos', 'true');
-    
+
     const response = await apiClient.get(`/tiposuporte/unidade/${unidadeId}?${params.toString()}`);
     return response.data.data;
   } catch (error) {
@@ -109,10 +109,24 @@ export async function alterarTipoSuporte(
 ) {
   try {
     const response = await apiClient.put(`/tiposuporte/${id}`, data);
+    //console.log('Resposta da API ao alterar tipo de suporte:', response.data);
     return response.data;
-  } catch (error) {
-    console.error('Erro ao alterar tipo de suporte:', error);
-    throw error;
+  } catch (error: any) {
+    // Acessa a mensagem de erro retornada pelo backend
+    if (error.response) {
+      // O backend respondeu com status code fora do range 2xx
+      const mensagemErro = error.response.data?.error || error.response.data?.message || 'Erro desconhecido';
+      console.error('Erro ao alterar tipo de suporte:', mensagemErro);
+      throw new Error(mensagemErro);
+    } else if (error.request) {
+      // A requisição foi feita mas não houve resposta
+      console.error('Sem resposta do servidor:', error.request);
+      throw new Error('Servidor não respondeu');
+    } else {
+      // Algo aconteceu na configuração da requisição
+      console.error('Erro na configuração:', error.message);
+      throw error;
+    }
   }
 }
 

@@ -116,7 +116,7 @@ class TipoSuporteController {
 
         } catch (error) {
             console.error('Erro ao cadastrar tipo de suporte:', error);
-            res.status(500).json({ error: error.message });
+            res.status(500).json({ error: 'Erro ao cadastrar tipo de suporte' });
         }
     }
 
@@ -272,7 +272,7 @@ class TipoSuporteController {
 
         } catch (error) {
             console.error('Erro ao alterar tipo de suporte:', error);
-            res.status(500).json({ error: error.message });
+            res.status(500).json({ error: 'Erro ao alterar tipo de suporte' });
         }
     }
 
@@ -374,7 +374,7 @@ class TipoSuporteController {
 
             let [tipos] = [];
 
-            console.log('filtro = ', filtro);
+            //console.log('filtro = ', filtro);
 
             // Buscar tipos de suporte
             if (usuarioLogado.usuarioTipo === 'ADMINISTRADOR' || usuarioLogado.usuarioTipo === 'GESTOR') {
@@ -419,7 +419,7 @@ class TipoSuporteController {
 
         } catch (error) {
             console.error('Erro ao listar tipos de suporte:', error);
-            res.status(500).json({ error: error.message });
+            res.status(500).json({ error: 'Erro ao listar tipos de suporte' });
         }
     }
 
@@ -509,7 +509,7 @@ class TipoSuporteController {
 
         } catch (error) {
             console.error('Erro ao buscar tipo de suporte:', error);
-            res.status(500).json({ error: error.message });
+            res.status(500).json({ error: 'Erro ao buscar tipo de suporte' });
         }
     }
 
@@ -626,7 +626,7 @@ class TipoSuporteController {
 
         } catch (error) {
             console.error('Erro ao alterar status do tipo de suporte:', error);
-            res.status(500).json({ error: error.message });
+            res.status(500).json({ error: 'Erro ao alterar status do tipo de suporte' });
         }
     }
 
@@ -723,7 +723,7 @@ class TipoSuporteController {
 
         } catch (error) {
             console.error('Erro ao listar tipos de suporte por unidade:', error);
-            res.status(500).json({ error: error.message });
+            res.status(500).json({ error: 'Erro ao listar tipos de suporte por unidade' });
         }
     }
 

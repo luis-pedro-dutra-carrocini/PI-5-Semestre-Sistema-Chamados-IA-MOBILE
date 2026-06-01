@@ -532,6 +532,10 @@ export default function ChamadosPage() {
                       {chamado.ChamadoTitulo}
                     </h3>
 
+                    <span>
+                      {chamado.ChamadoDescricaoFormatada || chamado.ChamadoDescricaoInicial}
+                    </span>
+
                     <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
                       <span className="flex items-center gap-1">
                         <Users size={14} />

@@ -29,7 +29,7 @@ class ClassificadorPool {
         return new Promise((resolve, reject) => {
             const options = {
                 mode: 'text',
-                pythonPath: 'python',
+                pythonPath: process.env.PYTHON, //'python'
                 pythonOptions: ['-u'],
                 scriptPath: this.scriptPath,
                 args: []

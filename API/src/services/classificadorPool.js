@@ -41,7 +41,7 @@ class ClassificadorPool {
             
             const timeout = setTimeout(() => {
                 reject(new Error(`Timeout ao inicializar worker ${workerId}`));
-            }, 10000);
+            }, 20000);
             
             worker.once('message', (message) => {
                 clearTimeout(timeout);
